@@ -1,0 +1,8 @@
+locator: model.go
+meta:
+  function_list: []
+  import_files_list:
+    - bytes
+    - encoding/json
+    - fmt
+  language: go

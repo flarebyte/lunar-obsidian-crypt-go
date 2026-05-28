@@ -1,0 +1,11 @@
+locator: crypt.go
+meta:
+  function_list:
+    - New
+    - cloneBytes
+    - cloneCypher
+    - cloneScope
+    - cloneStore
+  import_files_list:
+    - time
+  language: go

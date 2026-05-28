@@ -1,0 +1,14 @@
+locator: token.go
+meta:
+  function_list:
+    - composeFullToken
+    - extractToken
+    - extractTokenPrefix
+    - splitFullToken
+    - tokenExtractionError
+    - unsupportedPrefixError
+  import_files_list:
+    - fmt
+    - slices
+    - strings
+  language: go

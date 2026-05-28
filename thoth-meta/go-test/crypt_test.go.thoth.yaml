@@ -1,0 +1,27 @@
+locator: crypt_test.go
+meta:
+  function_list:
+    - TestSignIDDoesNotLeakSecretInFailures
+    - TestSignIDRejectsInvalidPayload
+    - TestSignIDRejectsUnsupportedPrefix
+    - TestSignIDUsesCurrentSecretNotAltSecret
+    - TestVerifyIDAltSecretFailure
+    - TestVerifyIDAltSecretSuccess
+    - TestVerifyIDByPrefixRejectsWrongPrefix
+    - TestVerifyIDRejectsBadSignature
+    - TestVerifyIDRejectsCustomScopeValidatorFailure
+    - TestVerifyIDRejectsExpiredToken
+    - TestVerifyIDRejectsInvalidPayload
+    - TestVerifyIDRejectsMalformedToken
+    - TestVerifyIDRejectsScopeMismatch
+    - TestVerifyIDRejectsUnknownPrefix
+    - TestVerifyIDRejectsWrongAlgorithm
+    - TestVerifyIDSuccess
+    - newTestCrypt
+  import_files_list:
+    - errors
+    - github.com/golang-jwt/jwt/v5
+    - strings
+    - testing
+    - time
+  language: go

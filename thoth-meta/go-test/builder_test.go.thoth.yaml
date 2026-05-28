@@ -1,0 +1,14 @@
+locator: builder_test.go
+meta:
+  function_list:
+    - TestBuilderAndPlainStoreAreEquivalent
+    - TestBuilderBuildsPlainStore
+    - TestBuilderRejectsDuplicatePrefixes
+    - TestBuilderRejectsInvalidInputsThroughStoreValidation
+    - TestBuilderStoreIsIndependent
+    - sameCypher
+    - validCypher
+  import_files_list:
+    - strings
+    - testing
+  language: go

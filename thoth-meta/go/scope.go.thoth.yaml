@@ -1,0 +1,11 @@
+locator: scope.go
+meta:
+  function_list:
+    - checkScope
+    - mismatchedScopeKeys
+  import_files_list:
+    - fmt
+    - slices
+    - sort
+    - strings
+  language: go

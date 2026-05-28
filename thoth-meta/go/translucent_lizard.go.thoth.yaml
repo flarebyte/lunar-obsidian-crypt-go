@@ -1,0 +1,23 @@
+locator: translucent_lizard.go
+meta:
+  function_list:
+    - claimInt64
+    - isDecodeTokenError
+    - payloadFromVerifiedClaims
+    - protectedPayloadFromClaims
+    - scopeFromClaim
+    - scopeValueFromClaim
+    - signClaims
+    - signingMethodForStrength
+    - translucentLizardSignID
+    - translucentLizardVerifyID
+    - verifyClaims
+  import_files_list:
+    - encoding/base64
+    - encoding/json
+    - fmt
+    - github.com/golang-jwt/jwt/v5
+    - math
+    - strings
+    - time
+  language: go

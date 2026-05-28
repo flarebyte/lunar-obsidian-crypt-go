@@ -1,0 +1,8 @@
+locator: errors_test.go
+meta:
+  function_list:
+    - TestResultConstructors
+    - TestStableErrorStepValues
+  import_files_list:
+    - testing
+  language: go

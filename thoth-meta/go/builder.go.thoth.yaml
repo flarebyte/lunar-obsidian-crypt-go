@@ -1,0 +1,7 @@
+locator: builder.go
+meta:
+  function_list:
+    - NewBuilder
+  import_files_list:
+    - fmt
+  language: go

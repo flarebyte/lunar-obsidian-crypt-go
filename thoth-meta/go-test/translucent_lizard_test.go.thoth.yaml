@@ -1,0 +1,21 @@
+locator: translucent_lizard_test.go
+meta:
+  function_list:
+    - TestSignClaimsUsesExpectedAlgorithm
+    - TestSigningMethodForStrength
+    - TestSigningMethodForStrengthRejectsUnknownStrength
+    - TestTranslucentLizardSignIDCreatesPrefixedJWT
+    - TestVerifyClaimsAcceptsMatchingHMACMethod
+    - TestVerifyClaimsRejectsAlgorithmConfusion
+    - TestVerifyClaimsRejectsNonHMACAlgorithm
+    - TestVerifyClaimsRejectsNoneAlgorithm
+    - fixedNow
+    - jwtHeaderAlg
+  import_files_list:
+    - encoding/base64
+    - encoding/json
+    - github.com/golang-jwt/jwt/v5
+    - strings
+    - testing
+    - time
+  language: go

@@ -1,0 +1,17 @@
+locator: example_test.go
+meta:
+  function_list:
+    - ExampleCrypt_SignID
+    - ExampleCrypt_VerifyID
+    - ExampleCrypt_VerifyIDByPrefix
+    - ExampleNewBuilder
+    - ExampleNew_plainStore
+    - ExampleTranslucentLizardCypher_expectedScope
+    - ExampleTranslucentLizardCypher_scopeValidator
+    - ExampleTranslucentLizardCypher_secretRotation
+    - exampleCrypt
+  import_files_list:
+    - errors
+    - github.com/flarebyte/lunar-obsidian-crypt-go
+    - log
+  language: go

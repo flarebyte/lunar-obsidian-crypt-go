@@ -1,0 +1,19 @@
+locator: validation.go
+meta:
+  function_list:
+    - ValidateIDPayload
+    - ValidateProtectedPayload
+    - ValidateStore
+    - validateExpectedScope
+    - validateIDPayloadFields
+    - validatePrefix
+    - validateStrength
+    - validateTitle
+    - validateTranslucentLizardCypher
+  import_files_list:
+    - errors
+    - fmt
+    - strings
+    - time
+    - unicode/utf8
+  language: go

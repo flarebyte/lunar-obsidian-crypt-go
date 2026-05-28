@@ -1,0 +1,8 @@
+locator: scope_test.go
+meta:
+  function_list:
+    - TestCheckScope
+  import_files_list:
+    - errors
+    - testing
+  language: go
