@@ -1,0 +1,12 @@
+step,operation,input,output,portable_requirement
+1,build-store,builder calls or equivalent configuration,Store model,Language implementations may use builders structs or config files if they produce the same model
+2,signId,prefix and IdPayload,Result<string CryptError>,Unsupported prefix fails with step sign-id/store
+3,validate-sign-payload,IdPayload,valid payload or validation error,ID must be present and scope values must be string or string-list
+4,create-jwt,valid payload cypher secret expiration strength,JWT token,Protected header alg is derived from strength
+5,compose-full-token,prefix and JWT token,prefix:jwt-token,Prefix is prepended outside the JWT with a colon separator
+6,verifyId,full token,Result<IdPayload CryptError>,Prefix is extracted then delegated to prefix-specific verification
+7,extract-token,expected prefix and full token,JWT token or extraction error,Embedded prefix must match the expected prefix
+8,decode-and-validate,JWT token,ProtectedPayload or validation error,Decoded payload must include id and exp
+9,check-scope,ProtectedPayload and cypher scope policy,scope accepted or verification error,Expected scope and custom validator are checked before signature verification
+10,verify-signature,JWT token and current or alternate secret,ProtectedPayload or verification error,Alternate secret is a fallback for rotation
+11,return-payload,ProtectedPayload,IdPayload,The exp claim is removed from the application payload

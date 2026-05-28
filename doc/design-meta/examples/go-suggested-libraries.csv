@@ -1,0 +1,5 @@
+library,package,recommendation,reason,when_to_reconsider
+golang-jwt,jwt/v5,Use as the first JWT implementation dependency,Focused JWT library with HS256 HS384 and HS512 support matching the protocol strength matrix,Reconsider if the protocol expands beyond compact signed JWTs into broader JOSE features
+standard-library,encoding/json strings time errors fmt,Use for payload decoding prefix parsing expiration and validation errors,Keeps the runtime dependency surface small and makes deterministic protocol behavior easier to audit,Reconsider only if custom parsing or validation becomes too large to maintain clearly
+go-playground-validator,validator/v10,Do not use initially,The protocol needs stable privacy-first validation errors with exact paths rather than generic tag-driven validation,Reconsider if model validation grows substantially and custom error mapping remains stable
+lestrrat-go,jwx/v3,Do not use initially,Full JOSE coverage is more capability than the current HMAC compact JWT protocol needs,Reconsider if future cypher kinds require JWK JWE detached signatures or richer JOSE interoperability

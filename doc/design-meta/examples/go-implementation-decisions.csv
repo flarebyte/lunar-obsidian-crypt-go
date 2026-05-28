@@ -1,0 +1,15 @@
+decision,go_guidance,rationale
+api-shape,Expose a small synchronous API with New Store SignID VerifyID and VerifyIDByPrefix,HMAC signing and verification are CPU-local operations and do not need context unless a future key provider is introduced
+result-shape,Return Result[T] values instead of Go errors for expected signing and verification failures,Preserves the TypeScript railway-style contract and keeps callers branching on status
+constructor-validation,Return (*Crypt error) from New when store configuration is invalid,Configuration errors are programmer/setup failures and should be caught before runtime signing
+payload-validation,Return failure Result values for invalid payloads passed to SignID or decoded from tokens,Payload failures are part of normal data handling and map to stable protocol steps
+scope-value,Represent scope values as []string and normalize single string values into one-element slices during JSON decoding,Go cannot express string|string[] directly and slice equality should be value-based
+scope-comparison,Compare expected scope values by normalized string-slice contents rather than reference identity,The TypeScript implementation currently uses Object.is which makes array scope portability ambiguous
+expiration,Convert Expiration to time.Duration and reject non-positive values or unknown units,Go callers should get deterministic validation before token creation
+jwt-library,Use a maintained JWT or JOSE library and explicitly restrict accepted methods to HS256 HS384 and HS512,Prevents algorithm confusion and preserves the strength mapping
+token-parsing,Use strings.LastIndexByte(fullToken ':') to split prefix from JWT,Matches the final-colon rule and supports prefixes that contain colons
+verification-order,For compatibility decode and validate claims before signature verification but never return claims until verification succeeds,Matches the TypeScript behavior while keeping trust boundaries explicit
+alt-secret,Try the current secret first and only try AltSecret after current verification fails,Preserves rotation behavior and makes finalMessage meaningful when both secrets fail
+exp-stripping,Return IDPayload without Exp on successful verification,Keeps JWT protocol claims out of application payloads
+error-ids,Keep step strings byte-for-byte stable across Go and TypeScript,Allows cross-language tests and caller logic to rely on deterministic failures
+test-vectors,Add fixed-secret fixed-time contract tests before implementing release behavior,Prevents accidental divergence in token syntax algorithm mapping and error results

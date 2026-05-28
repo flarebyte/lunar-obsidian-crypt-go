@@ -1,0 +1,10 @@
+path,responsibility,public_surface,test_focus
+crypt.go,Own the Crypt type and route SignID VerifyID and VerifyIDByPrefix calls,New SignID VerifyID VerifyIDByPrefix,unsupported prefixes and cypher dispatch
+model.go,Define Store Cypher Expiration IDPayload ProtectedPayload Result CryptError and ValidationError,domain structs constants and generic Result,JSON field names zero values and validation constraints
+builder.go,Offer ergonomic construction helpers without hiding the validated Store model,Builder or NewStore helper,prefix registration title constraints and duplicate prefixes
+translucent_lizard.go,Implement HMAC JWT signing and verification for the translucent-lizard cypher,internal sign and verify functions,algorithm mapping expiration alt secret fallback and exp stripping
+token.go,Parse and compose prefixed JWT tokens,extractTokenPrefix extractToken composeFullToken,final-colon splitting wrong prefix empty prefix and missing token
+scope.go,Compare expected scope and run custom scope validators,checkScope helper,string and string-list equality missing scope and custom validator errors
+validation.go,Validate store and payload inputs before cryptographic operations,ValidateStore ValidateIDPayload helpers,stable validation paths and privacy-first messages
+errors.go,Centralize stable step identifiers and result constructors,Succeed Fail helpers or constructors,exact step values status values and finalMessage behavior
+*_test.go,Hold cross-language contract tests and Go unit tests,none,canonical token syntax algorithm mapping and failure catalog coverage

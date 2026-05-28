@@ -1,0 +1,7 @@
+usecase,actor,goal,success_output,notes
+configure-store,application developer,Define a named key store with one or more signing prefixes,Store model with title and cypher map,Prefix names are application-level identifiers and are not JWT claims
+sign-resource-id,application service,Create a portable signed token for a resource identifier,prefix:jwt full token,Payload remains visible because the protocol signs but does not encrypt
+verify-prefixed-token,application service,Recover and validate the ID payload from a full token,ID payload without exp,Prefix selects the cypher before signature verification
+restrict-token-scope,application service,Require selected scope fields or custom scope rules,Failure when mandatory scope requirements are not met,Scope checks happen during verification
+rotate-secret,operations team,Accept tokens signed with the previous secret during migration,Verified payload when alternate secret succeeds,Current secret is tried first and alternate secret is a fallback
+reject-invalid-token,application service,Return deterministic failure details for malformed expired or mismatched tokens,Failure result with step and message,Callers should branch on result status rather than exceptions

@@ -1,0 +1,15 @@
+contract,input,expected
+sign-hs256,prefix product strength sufficient payload id product123,token starts with product: and JWT header alg is HS256
+sign-hs384,prefix product strength good payload id product123,token starts with product: and JWT header alg is HS384
+sign-hs512,prefix product strength strong payload id product123,token starts with product: and JWT header alg is HS512
+verify-prefix,last-colon full token with prefix tenant:product,extracted prefix is tenant:product and token is text after final colon
+verify-wrong-prefix,VerifyIDByPrefix company called with product:jwt,failure step verify-id/extract-token
+verify-unknown-prefix,VerifyID called with unsupported prefix,failure step verify-id/extract-token or verify-id/store according to extraction phase
+scope-string-match,expected account account890 actual account account890,verification continues
+scope-list-match,expected roles admin writer actual roles admin writer,verification continues using value equality
+scope-missing,expected account account890 actual no scope,failure step verify-id/verify-scope
+scope-validator-error,validator returns an error string,failure step verify-id/verify-scope
+alt-secret-success,current secret fails previous secret succeeds,success result with payload and no exp field
+alt-secret-failure,current secret fails previous secret fails,failure step verify-id/verify-token with finalMessage
+expired-token,verified token has expired,failure step verify-id/verify-token
+invalid-payload,decoded payload has no id,failure step verify-id/validate-payload
