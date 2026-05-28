@@ -10,6 +10,7 @@ import (
 
 const (
 	maxTitleLength     = 50
+	maxIDLength        = 400
 	maxExpirationValue = 1000000
 )
 
@@ -56,6 +57,21 @@ func ValidateStore(store Store) error {
 	}
 
 	return nil
+}
+
+func ValidateIDPayload(payload IDPayload) []ValidationError {
+	return validateIDPayloadFields(payload.ID, payload.Scope)
+}
+
+func ValidateProtectedPayload(payload ProtectedPayload) []ValidationError {
+	errs := validateIDPayloadFields(payload.ID, payload.Scope)
+	if payload.Exp <= 0 {
+		errs = append(errs, ValidationError{
+			Message: "exp must be a positive number",
+			Path:    "exp",
+		})
+	}
+	return errs
 }
 
 func validateTranslucentLizardCypher(prefix string, cypher TranslucentLizardCypher) error {
@@ -130,4 +146,52 @@ func validateExpectedScope(prefix string, scope map[string]ScopeValue) error {
 		}
 	}
 	return nil
+}
+
+func validateIDPayloadFields(id string, scope map[string]ScopeValue) []ValidationError {
+	var errs []ValidationError
+	if id == "" {
+		errs = append(errs, ValidationError{
+			Message: "id is required",
+			Path:    "id",
+		})
+	} else if utf8.RuneCountInString(id) > maxIDLength {
+		errs = append(errs, ValidationError{
+			Message: fmt.Sprintf("id must be at most %d characters", maxIDLength),
+			Path:    "id",
+		})
+	}
+
+	for key, values := range scope {
+		if key == "" {
+			errs = append(errs, ValidationError{
+				Message: "scope key is required",
+				Path:    "scope",
+			})
+			continue
+		}
+		if strings.ContainsAny(key, "\r\n") {
+			errs = append(errs, ValidationError{
+				Message: "scope key must be a single line",
+				Path:    "scope." + key,
+			})
+		}
+		if len(values) == 0 {
+			errs = append(errs, ValidationError{
+				Message: "scope value must include at least one string",
+				Path:    "scope." + key,
+			})
+			continue
+		}
+		for index, value := range values {
+			if value == "" {
+				errs = append(errs, ValidationError{
+					Message: "scope value is required",
+					Path:    fmt.Sprintf("scope.%s[%d]", key, index),
+				})
+			}
+		}
+	}
+
+	return errs
 }

@@ -217,6 +217,108 @@ func TestNewCopiesStore(t *testing.T) {
 	}
 }
 
+func TestValidateIDPayload(t *testing.T) {
+	tests := []struct {
+		name string
+		in   IDPayload
+		want []ValidationError
+	}{
+		{
+			name: "valid without scope",
+			in:   IDPayload{ID: "product123"},
+		},
+		{
+			name: "valid with scope",
+			in: IDPayload{
+				ID:    "product123",
+				Scope: map[string]ScopeValue{"account": {"account890"}},
+			},
+		},
+		{
+			name: "missing id",
+			in:   IDPayload{},
+			want: []ValidationError{{Message: "id is required", Path: "id"}},
+		},
+		{
+			name: "overlong id",
+			in:   IDPayload{ID: strings.Repeat("a", 401)},
+			want: []ValidationError{{Message: "id must be at most 400 characters", Path: "id"}},
+		},
+		{
+			name: "empty scope key",
+			in: IDPayload{
+				ID:    "product123",
+				Scope: map[string]ScopeValue{"": {"account890"}},
+			},
+			want: []ValidationError{{Message: "scope key is required", Path: "scope"}},
+		},
+		{
+			name: "multiline scope key",
+			in: IDPayload{
+				ID:    "product123",
+				Scope: map[string]ScopeValue{"account\nid": {"account890"}},
+			},
+			want: []ValidationError{{Message: "scope key must be a single line", Path: "scope.account\nid"}},
+		},
+		{
+			name: "empty scope value list",
+			in: IDPayload{
+				ID:    "product123",
+				Scope: map[string]ScopeValue{"account": {}},
+			},
+			want: []ValidationError{{Message: "scope value must include at least one string", Path: "scope.account"}},
+		},
+		{
+			name: "empty scope value",
+			in: IDPayload{
+				ID:    "product123",
+				Scope: map[string]ScopeValue{"account": {""}},
+			},
+			want: []ValidationError{{Message: "scope value is required", Path: "scope.account[0]"}},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := ValidateIDPayload(tt.in)
+			assertValidationErrors(t, got, tt.want)
+		})
+	}
+}
+
+func TestValidateProtectedPayload(t *testing.T) {
+	tests := []struct {
+		name string
+		in   ProtectedPayload
+		want []ValidationError
+	}{
+		{
+			name: "valid",
+			in:   ProtectedPayload{ID: "product123", Exp: 1700000000},
+		},
+		{
+			name: "missing exp",
+			in:   ProtectedPayload{ID: "product123"},
+			want: []ValidationError{{Message: "exp must be a positive number", Path: "exp"}},
+		},
+		{
+			name: "missing id and exp",
+			in:   ProtectedPayload{},
+			want: []ValidationError{
+				{Message: "id is required", Path: "id"},
+				{Message: "exp must be a positive number", Path: "exp"},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := ValidateProtectedPayload(tt.in)
+			assertValidationErrors(t, got, tt.want)
+		})
+	}
+}
+
 func validStore(secret []byte) Store {
 	return Store{
 		Title: "Business ID signing store",
@@ -229,5 +331,17 @@ func validStore(secret []byte) Store {
 				Expiration: Expiration{Value: 2, Unit: Hours},
 			},
 		},
+	}
+}
+
+func assertValidationErrors(t *testing.T, got []ValidationError, want []ValidationError) {
+	t.Helper()
+	if len(got) != len(want) {
+		t.Fatalf("validation errors = %#v, want %#v", got, want)
+	}
+	for index := range got {
+		if got[index] != want[index] {
+			t.Fatalf("validation error %d = %#v, want %#v", index, got[index], want[index])
+		}
 	}
 }
