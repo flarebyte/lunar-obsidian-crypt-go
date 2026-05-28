@@ -321,7 +321,194 @@ Stable error steps and expected failure shape.
 | message | verification | verify-id/verify-scope | Scope is missing mismatched or rejected by validator |
 | message and optional finalMessage | verification | verify-id/verify-token | JWT is expired has a bad signature or cannot be verified |
 
-## 04 Open Questions
+## 04 Go Implementation
+
+Concrete Go library guidance derived from the portable protocol.
+
+### 01 API Shape
+
+Suggested public Go surface and domain types.
+
+#### Go API Sketch
+
+```go
+package lunarcrypt
+
+import "time"
+
+type TimeUnit string
+
+const (
+	Seconds TimeUnit = "seconds"
+	Minutes TimeUnit = "minutes"
+	Hours   TimeUnit = "hours"
+	Days    TimeUnit = "days"
+	Weeks   TimeUnit = "weeks"
+)
+
+type EncryptionStrength string
+
+const (
+	Sufficient EncryptionStrength = "sufficient"
+	Good       EncryptionStrength = "good"
+	Strong     EncryptionStrength = "strong"
+)
+
+type CypherKind string
+
+const (
+	TranslucentLizard CypherKind = "translucent-lizard"
+)
+
+type ResultStatus string
+
+const (
+	Success ResultStatus = "success"
+	Failure ResultStatus = "failure"
+)
+
+type Expiration struct {
+	Value int
+	Unit  TimeUnit
+}
+
+func (e Expiration) Duration() (time.Duration, error) {
+	// Implementations should reject unknown units and non-positive values.
+	return 0, nil
+}
+
+type ScopeValue []string
+
+type IDPayload struct {
+	ID    string                `json:"id"`
+	Scope map[string]ScopeValue `json:"scope,omitempty"`
+}
+
+type ProtectedPayload struct {
+	ID    string                `json:"id"`
+	Scope map[string]ScopeValue `json:"scope,omitempty"`
+	Exp   int64                 `json:"exp"`
+}
+
+type ScopeValidator func(scope map[string]ScopeValue) error
+
+type TranslucentLizardCypher struct {
+	Kind           CypherKind
+	Title          string
+	Secret         []byte
+	AltSecret      []byte
+	Strength       EncryptionStrength
+	Expiration     Expiration
+	ExpectedScope  map[string]ScopeValue
+	ScopeValidator ScopeValidator
+}
+
+type Store struct {
+	Title   string
+	Cyphers map[string]TranslucentLizardCypher
+}
+
+type ValidationError struct {
+	Message string `json:"message"`
+	Path    string `json:"path"`
+}
+
+type CryptError struct {
+	Step         string            `json:"step"`
+	Message      string            `json:"message,omitempty"`
+	FinalMessage string            `json:"finalMessage,omitempty"`
+	Errors       []ValidationError `json:"errors,omitempty"`
+}
+
+type Result[T any] struct {
+	Status ResultStatus `json:"status"`
+	Value  T            `json:"value,omitempty"`
+	Error  *CryptError  `json:"error,omitempty"`
+}
+
+type Crypt struct {
+	store    Store
+	prefixes []string
+}
+
+func New(store Store) (*Crypt, error) {
+	return nil, nil
+}
+
+func (c *Crypt) SignID(prefix string, payload IDPayload) Result[string] {
+	return Result[string]{}
+}
+
+func (c *Crypt) VerifyID(fullToken string) Result[IDPayload] {
+	return Result[IDPayload]{}
+}
+
+func (c *Crypt) VerifyIDByPrefix(prefix string, fullToken string) Result[IDPayload] {
+	return Result[IDPayload]{}
+}
+```
+
+#### Go Implementation Decisions
+
+| decision | go_guidance | rationale |
+| --- | --- | --- |
+| api-shape | Expose a small synchronous API with New Store SignID VerifyID and VerifyIDByPrefix | HMAC signing and verification are CPU-local operations and do not need context unless a future key provider is introduced |
+| result-shape | Return Result[T] values instead of Go errors for expected signing and verification failures | Preserves the TypeScript railway-style contract and keeps callers branching on status |
+| constructor-validation | Return (*Crypt error) from New when store configuration is invalid | Configuration errors are programmer/setup failures and should be caught before runtime signing |
+| payload-validation | Return failure Result values for invalid payloads passed to SignID or decoded from tokens | Payload failures are part of normal data handling and map to stable protocol steps |
+| scope-value | Represent scope values as []string and normalize single string values into one-element slices during JSON decoding | Go cannot express string\|string[] directly and slice equality should be value-based |
+| scope-comparison | Compare expected scope values by normalized string-slice contents rather than reference identity | The TypeScript implementation currently uses Object.is which makes array scope portability ambiguous |
+| expiration | Convert Expiration to time.Duration and reject non-positive values or unknown units | Go callers should get deterministic validation before token creation |
+| jwt-library | Use a maintained JWT or JOSE library and explicitly restrict accepted methods to HS256 HS384 and HS512 | Prevents algorithm confusion and preserves the strength mapping |
+| token-parsing | Use strings.LastIndexByte(fullToken ':') to split prefix from JWT | Matches the final-colon rule and supports prefixes that contain colons |
+| verification-order | For compatibility decode and validate claims before signature verification but never return claims until verification succeeds | Matches the TypeScript behavior while keeping trust boundaries explicit |
+| alt-secret | Try the current secret first and only try AltSecret after current verification fails | Preserves rotation behavior and makes finalMessage meaningful when both secrets fail |
+| exp-stripping | Return IDPayload without Exp on successful verification | Keeps JWT protocol claims out of application payloads |
+| error-ids | Keep step strings byte-for-byte stable across Go and TypeScript | Allows cross-language tests and caller logic to rely on deterministic failures |
+| test-vectors | Add fixed-secret fixed-time contract tests before implementing release behavior | Prevents accidental divergence in token syntax algorithm mapping and error results |
+
+### 02 Package Layout
+
+Focused files and responsibilities for the Go implementation.
+
+#### Go Package Layout
+
+| path | public_surface | responsibility | test_focus |
+| --- | --- | --- | --- |
+| crypt.go | New SignID VerifyID VerifyIDByPrefix | Own the Crypt type and route SignID VerifyID and VerifyIDByPrefix calls | unsupported prefixes and cypher dispatch |
+| model.go | domain structs constants and generic Result | Define Store Cypher Expiration IDPayload ProtectedPayload Result CryptError and ValidationError | JSON field names zero values and validation constraints |
+| builder.go | Builder or NewStore helper | Offer ergonomic construction helpers without hiding the validated Store model | prefix registration title constraints and duplicate prefixes |
+| translucent_lizard.go | internal sign and verify functions | Implement HMAC JWT signing and verification for the translucent-lizard cypher | algorithm mapping expiration alt secret fallback and exp stripping |
+| token.go | extractTokenPrefix extractToken composeFullToken | Parse and compose prefixed JWT tokens | final-colon splitting wrong prefix empty prefix and missing token |
+| scope.go | checkScope helper | Compare expected scope and run custom scope validators | string and string-list equality missing scope and custom validator errors |
+| validation.go | ValidateStore ValidateIDPayload helpers | Validate store and payload inputs before cryptographic operations | stable validation paths and privacy-first messages |
+| errors.go | Succeed Fail helpers or constructors | Centralize stable step identifiers and result constructors | exact step values status values and finalMessage behavior |
+| *_test.go | none | Hold cross-language contract tests and Go unit tests | canonical token syntax algorithm mapping and failure catalog coverage |
+
+### 03 Contract Tests
+
+Cross-language behavior that should be pinned before release.
+
+#### Go Contract Tests
+
+| contract | expected | input |
+| --- | --- | --- |
+| sign-hs256 | token starts with product: and JWT header alg is HS256 | prefix product strength sufficient payload id product123 |
+| sign-hs384 | token starts with product: and JWT header alg is HS384 | prefix product strength good payload id product123 |
+| sign-hs512 | token starts with product: and JWT header alg is HS512 | prefix product strength strong payload id product123 |
+| verify-prefix | extracted prefix is tenant:product and token is text after final colon | last-colon full token with prefix tenant:product |
+| verify-wrong-prefix | failure step verify-id/extract-token | VerifyIDByPrefix company called with product:jwt |
+| verify-unknown-prefix | failure step verify-id/extract-token or verify-id/store according to extraction phase | VerifyID called with unsupported prefix |
+| scope-string-match | verification continues | expected account account890 actual account account890 |
+| scope-list-match | verification continues using value equality | expected roles admin writer actual roles admin writer |
+| scope-missing | failure step verify-id/verify-scope | expected account account890 actual no scope |
+| scope-validator-error | failure step verify-id/verify-scope | validator returns an error string |
+| alt-secret-success | success result with payload and no exp field | current secret fails previous secret succeeds |
+| alt-secret-failure | failure step verify-id/verify-token with finalMessage | current secret fails previous secret fails |
+| expired-token | failure step verify-id/verify-token | verified token has expired |
+| invalid-payload | failure step verify-id/validate-payload | decoded payload has no id |
+
+## 05 Open Questions
 
 Questions to settle before treating this as a cross-language standard.
 
@@ -332,8 +519,9 @@ Implementation details that deserve explicit product decisions.
 #### Open Questions
 
 1. Should the protocol reserve a version field for future cypher kinds or token formats?
-2. Should array scope values be compared by value rather than by implementation object identity?
-3. Should scope policy run before or after signature verification in all future implementations?
-4. Should `verify-id/decode-token` become a required failure path for malformed JWTs?
-5. Should the generated cross-language contract include canonical JSON test vectors with fixed secrets and expiry times?
+2. Should scope policy run before or after signature verification in all future implementations?
+3. Should `verify-id/decode-token` become a required failure path for malformed JWTs?
+4. Which Go JWT library should be the first implementation dependency?
+5. Should the first Go release include a builder API, plain structs only, or both?
+6. Should canonical JSON test vectors with fixed secrets and expiry times be generated from flyb metadata?
 

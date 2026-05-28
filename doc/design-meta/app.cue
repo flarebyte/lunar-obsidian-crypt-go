@@ -2,7 +2,7 @@ package flyb
 
 source: "lunar-obsidian-crypt"
 name:   "lunar-obsidian-crypt-design-meta"
-modules: ["core", "protocol", "portable-api"]
+modules: ["core", "protocol", "portable-api", "go-implementation"]
 
 reports: [{
 	title:       "Lunar Obsidian Crypt Protocol Specification"
@@ -62,7 +62,23 @@ reports: [{
 			notes: ["crypt.error.catalog"]
 		}]
 	}, {
-		title:       "04 Open Questions"
+		title:       "04 Go Implementation"
+		description: "Concrete Go library guidance derived from the portable protocol."
+		sections: [{
+			title:       "01 API Shape"
+			description: "Suggested public Go surface and domain types."
+			notes: ["crypt.go.decisions", "crypt.go.api"]
+		}, {
+			title:       "02 Package Layout"
+			description: "Focused files and responsibilities for the Go implementation."
+			notes: ["crypt.go.package.layout"]
+		}, {
+			title:       "03 Contract Tests"
+			description: "Cross-language behavior that should be pinned before release."
+			notes: ["crypt.go.test.contracts"]
+		}]
+	}, {
+		title:       "05 Open Questions"
 		description: "Questions to settle before treating this as a cross-language standard."
 		sections: [{
 			title:       "01 Specification Gaps"
@@ -169,14 +185,42 @@ Secrets must be opaque byte arrays supplied by the embedding application. Implem
 		labels:   ["example", "typescript"]
 	},
 	{
+		name:      "crypt.go.decisions"
+		title:     "Go Implementation Decisions"
+		filepath:  "examples/go-implementation-decisions.csv"
+		arguments: ["format-csv=table"]
+		labels:    ["csv", "go", "implementation"]
+	},
+	{
+		name:     "crypt.go.api"
+		title:    "Go API Sketch"
+		filepath: "examples/go-api.go"
+		labels:   ["example", "go"]
+	},
+	{
+		name:      "crypt.go.package.layout"
+		title:     "Go Package Layout"
+		filepath:  "examples/go-package-layout.csv"
+		arguments: ["format-csv=table"]
+		labels:    ["csv", "go", "implementation"]
+	},
+	{
+		name:      "crypt.go.test.contracts"
+		title:     "Go Contract Tests"
+		filepath:  "examples/go-test-contracts.csv"
+		arguments: ["format-csv=table"]
+		labels:    ["contract-test", "csv", "go"]
+	},
+	{
 		name:  "crypt.open.questions"
 		title: "Open Questions"
 		markdown: """
 1. Should the protocol reserve a version field for future cypher kinds or token formats?
-2. Should array scope values be compared by value rather than by implementation object identity?
-3. Should scope policy run before or after signature verification in all future implementations?
-4. Should `verify-id/decode-token` become a required failure path for malformed JWTs?
-5. Should the generated cross-language contract include canonical JSON test vectors with fixed secrets and expiry times?
+2. Should scope policy run before or after signature verification in all future implementations?
+3. Should `verify-id/decode-token` become a required failure path for malformed JWTs?
+4. Which Go JWT library should be the first implementation dependency?
+5. Should the first Go release include a builder API, plain structs only, or both?
+6. Should canonical JSON test vectors with fixed secrets and expiry times be generated from flyb metadata?
 """
 		labels: ["open-question"]
 	},
