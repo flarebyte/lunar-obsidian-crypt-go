@@ -2,9 +2,45 @@ package lunarcrypt
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
+
+func translucentLizardSignID(prefix string, cypher TranslucentLizardCypher, payload IDPayload, now func() time.Time) Result[string] {
+	errs := ValidateIDPayload(payload)
+	if len(errs) > 0 {
+		return Fail[string](CryptError{
+			Step:   StepSignIDValidatePayload,
+			Errors: errs,
+		})
+	}
+
+	duration, err := cypher.Expiration.Duration()
+	if err != nil {
+		return Fail[string](CryptError{
+			Step:    StepSignIDSign,
+			Message: "The JWT token could not be signed",
+		})
+	}
+
+	claims := jwt.MapClaims{
+		"id":  payload.ID,
+		"exp": now().Add(duration).Unix(),
+	}
+	if payload.Scope != nil {
+		claims["scope"] = payload.Scope
+	}
+
+	token, err := signClaims(claims, cypher.Secret, cypher.Strength)
+	if err != nil {
+		return Fail[string](CryptError{
+			Step:    StepSignIDSign,
+			Message: "The JWT token could not be signed",
+		})
+	}
+	return Succeed(composeFullToken(prefix, token))
+}
 
 func signingMethodForStrength(strength EncryptionStrength) (jwt.SigningMethod, error) {
 	switch strength {

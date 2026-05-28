@@ -1,8 +1,11 @@
 package lunarcrypt
 
+import "time"
+
 type Crypt struct {
 	store    Store
 	prefixes []string
+	now      func() time.Time
 }
 
 func New(store Store) (*Crypt, error) {
@@ -19,7 +22,25 @@ func New(store Store) (*Crypt, error) {
 	return &Crypt{
 		store:    copied,
 		prefixes: prefixes,
+		now:      time.Now,
 	}, nil
+}
+
+func (c *Crypt) SignID(prefix string, payload IDPayload) Result[string] {
+	cypher, ok := c.store.Cyphers[prefix]
+	if !ok {
+		return Fail[string](CryptError{
+			Step:    StepSignIDStore,
+			Message: "Not supported cypher",
+		})
+	}
+	if cypher.Kind != TranslucentLizard {
+		return Fail[string](CryptError{
+			Step:    StepSignIDStore,
+			Message: "Not supported cypher",
+		})
+	}
+	return translucentLizardSignID(prefix, cypher, payload, c.now)
 }
 
 func cloneStore(store Store) Store {

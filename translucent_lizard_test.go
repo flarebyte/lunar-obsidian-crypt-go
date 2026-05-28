@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -58,6 +59,58 @@ func TestSignClaimsUsesExpectedAlgorithm(t *testing.T) {
 			}
 			if got := jwtHeaderAlg(t, tokenText); got != tt.wantAlg {
 				t.Fatalf("JWT alg = %q, want %q", got, tt.wantAlg)
+			}
+		})
+	}
+}
+
+func TestTranslucentLizardSignIDCreatesPrefixedJWT(t *testing.T) {
+	tests := []struct {
+		name     string
+		strength EncryptionStrength
+		wantAlg  string
+	}{
+		{name: "hs256", strength: Sufficient, wantAlg: "HS256"},
+		{name: "hs384", strength: Good, wantAlg: "HS384"},
+		{name: "hs512", strength: Strong, wantAlg: "HS512"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cypher := validCypher([]byte("current-secret"))
+			cypher.Strength = tt.strength
+			got := translucentLizardSignID("product", cypher, IDPayload{
+				ID:    "product123",
+				Scope: map[string]ScopeValue{"account": {"account890"}},
+			}, fixedNow)
+			if got.Status != Success {
+				t.Fatalf("status = %q, error = %#v, want success", got.Status, got.Error)
+			}
+			token, tokenErr := extractToken("product", got.Value)
+			if tokenErr != nil {
+				t.Fatalf("extractToken() error = %#v", tokenErr)
+			}
+			if alg := jwtHeaderAlg(t, token); alg != tt.wantAlg {
+				t.Fatalf("JWT alg = %q, want %q", alg, tt.wantAlg)
+			}
+
+			claims, err := verifyClaims(token, []byte("current-secret"), tt.strength)
+			if err != nil {
+				t.Fatalf("verifyClaims() error = %v", err)
+			}
+			if claims["id"] != "product123" {
+				t.Fatalf("id claim = %#v, want product123", claims["id"])
+			}
+			if gotExp := int64(claims["exp"].(float64)); gotExp != 4102452000 {
+				t.Fatalf("exp claim = %d, want 4102452000", gotExp)
+			}
+			scope, ok := claims["scope"].(map[string]any)
+			if !ok {
+				t.Fatalf("scope claim = %#v, want map", claims["scope"])
+			}
+			account, ok := scope["account"].([]any)
+			if !ok || len(account) != 1 || account[0] != "account890" {
+				t.Fatalf("scope account = %#v, want account890", scope["account"])
 			}
 		})
 	}
@@ -146,4 +199,8 @@ func jwtHeaderAlg(t *testing.T, tokenText string) string {
 		t.Fatalf("unmarshal JWT header: %v", err)
 	}
 	return header.Alg
+}
+
+func fixedNow() time.Time {
+	return time.Unix(4102444800, 0).UTC()
 }
