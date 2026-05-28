@@ -467,6 +467,15 @@ func (c *Crypt) VerifyIDByPrefix(prefix string, fullToken string) Result[IDPaylo
 | error-ids | Keep step strings byte-for-byte stable across Go and TypeScript | Allows cross-language tests and caller logic to rely on deterministic failures |
 | test-vectors | Add fixed-secret fixed-time contract tests before implementing release behavior | Prevents accidental divergence in token syntax algorithm mapping and error results |
 
+#### Go Suggested Libraries
+
+| library | package | reason | recommendation | when_to_reconsider |
+| --- | --- | --- | --- | --- |
+| golang-jwt | jwt/v5 | Focused JWT library with HS256 HS384 and HS512 support matching the protocol strength matrix | Use as the first JWT implementation dependency | Reconsider if the protocol expands beyond compact signed JWTs into broader JOSE features |
+| standard-library | encoding/json strings time errors fmt | Keeps the runtime dependency surface small and makes deterministic protocol behavior easier to audit | Use for payload decoding prefix parsing expiration and validation errors | Reconsider only if custom parsing or validation becomes too large to maintain clearly |
+| go-playground-validator | validator/v10 | The protocol needs stable privacy-first validation errors with exact paths rather than generic tag-driven validation | Do not use initially | Reconsider if model validation grows substantially and custom error mapping remains stable |
+| lestrrat-go | jwx/v3 | Full JOSE coverage is more capability than the current HMAC compact JWT protocol needs | Do not use initially | Reconsider if future cypher kinds require JWK JWE detached signatures or richer JOSE interoperability |
+
 ### 02 Package Layout
 
 Focused files and responsibilities for the Go implementation.
@@ -521,7 +530,6 @@ Implementation details that deserve explicit product decisions.
 1. Should the protocol reserve a version field for future cypher kinds or token formats?
 2. Should scope policy run before or after signature verification in all future implementations?
 3. Should `verify-id/decode-token` become a required failure path for malformed JWTs?
-4. Which Go JWT library should be the first implementation dependency?
-5. Should the first Go release include a builder API, plain structs only, or both?
-6. Should canonical JSON test vectors with fixed secrets and expiry times be generated from flyb metadata?
+4. Should the first Go release include a builder API, plain structs only, or both?
+5. Should canonical JSON test vectors with fixed secrets and expiry times be generated from flyb metadata?
 

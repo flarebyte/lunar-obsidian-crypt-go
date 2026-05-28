@@ -67,7 +67,7 @@ reports: [{
 		sections: [{
 			title:       "01 API Shape"
 			description: "Suggested public Go surface and domain types."
-			notes: ["crypt.go.decisions", "crypt.go.api"]
+			notes: ["crypt.go.decisions", "crypt.go.suggested.libraries", "crypt.go.api"]
 		}, {
 			title:       "02 Package Layout"
 			description: "Focused files and responsibilities for the Go implementation."
@@ -192,6 +192,13 @@ Secrets must be opaque byte arrays supplied by the embedding application. Implem
 		labels:    ["csv", "go", "implementation"]
 	},
 	{
+		name:      "crypt.go.suggested.libraries"
+		title:     "Go Suggested Libraries"
+		filepath:  "examples/go-suggested-libraries.csv"
+		arguments: ["format-csv=table"]
+		labels:    ["csv", "dependency", "go"]
+	},
+	{
 		name:     "crypt.go.api"
 		title:    "Go API Sketch"
 		filepath: "examples/go-api.go"
@@ -218,9 +225,8 @@ Secrets must be opaque byte arrays supplied by the embedding application. Implem
 1. Should the protocol reserve a version field for future cypher kinds or token formats?
 2. Should scope policy run before or after signature verification in all future implementations?
 3. Should `verify-id/decode-token` become a required failure path for malformed JWTs?
-4. Which Go JWT library should be the first implementation dependency?
-5. Should the first Go release include a builder API, plain structs only, or both?
-6. Should canonical JSON test vectors with fixed secrets and expiry times be generated from flyb metadata?
+4. Should the first Go release include a builder API, plain structs only, or both?
+5. Should canonical JSON test vectors with fixed secrets and expiry times be generated from flyb metadata?
 """
 		labels: ["open-question"]
 	},
