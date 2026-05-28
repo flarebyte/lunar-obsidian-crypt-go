@@ -107,7 +107,7 @@ go: {
 
 devOutput: {
 	color:      "auto"
-	style:      "summary"
+	style:      "per_test"
 	showPassed: true
 }
 
