@@ -43,6 +43,31 @@ func (c *Crypt) SignID(prefix string, payload IDPayload) Result[string] {
 	return translucentLizardSignID(prefix, cypher, payload, c.now)
 }
 
+func (c *Crypt) VerifyID(fullToken string) Result[IDPayload] {
+	prefix, _, err := extractTokenPrefix(fullToken, c.prefixes)
+	if err != nil {
+		return Fail[IDPayload](*err)
+	}
+	return c.VerifyIDByPrefix(prefix, fullToken)
+}
+
+func (c *Crypt) VerifyIDByPrefix(prefix string, fullToken string) Result[IDPayload] {
+	cypher, ok := c.store.Cyphers[prefix]
+	if !ok {
+		return Fail[IDPayload](CryptError{
+			Step:    StepVerifyIDStore,
+			Message: "Not supported cypher",
+		})
+	}
+	if cypher.Kind != TranslucentLizard {
+		return Fail[IDPayload](CryptError{
+			Step:    StepVerifyIDStore,
+			Message: "Not supported cypher",
+		})
+	}
+	return translucentLizardVerifyID(prefix, cypher, fullToken)
+}
+
 func cloneStore(store Store) Store {
 	copied := Store{
 		Title:   store.Title,

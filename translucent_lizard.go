@@ -2,6 +2,7 @@ package lunarcrypt
 
 import (
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -40,6 +41,145 @@ func translucentLizardSignID(prefix string, cypher TranslucentLizardCypher, payl
 		})
 	}
 	return Succeed(composeFullToken(prefix, token))
+}
+
+func translucentLizardVerifyID(prefix string, cypher TranslucentLizardCypher, fullToken string) Result[IDPayload] {
+	token, extractErr := extractToken(prefix, fullToken)
+	if extractErr != nil {
+		return Fail[IDPayload](*extractErr)
+	}
+
+	claims, verifyErr := verifyClaims(token, cypher.Secret, cypher.Strength)
+	if verifyErr != nil {
+		if len(cypher.AltSecret) > 0 {
+			altClaims, altErr := verifyClaims(token, cypher.AltSecret, cypher.Strength)
+			if altErr == nil {
+				return payloadFromVerifiedClaims(altClaims, cypher)
+			}
+			return Fail[IDPayload](CryptError{
+				Step:         StepVerifyIDVerifyToken,
+				Message:      "The JWT token could not be verified",
+				FinalMessage: "Verification with previous secret failed as well",
+			})
+		}
+		return Fail[IDPayload](CryptError{
+			Step:    StepVerifyIDVerifyToken,
+			Message: "The JWT token could not be verified",
+		})
+	}
+
+	return payloadFromVerifiedClaims(claims, cypher)
+}
+
+func payloadFromVerifiedClaims(claims jwt.MapClaims, cypher TranslucentLizardCypher) Result[IDPayload] {
+	protected, errs := protectedPayloadFromClaims(claims)
+	if len(errs) > 0 {
+		return Fail[IDPayload](CryptError{
+			Step:   StepVerifyIDValidatePayload,
+			Errors: errs,
+		})
+	}
+
+	if scopeErr := checkScope(protected.Scope, cypher.ExpectedScope, cypher.ScopeValidator); scopeErr != nil {
+		return Fail[IDPayload](*scopeErr)
+	}
+
+	return Succeed(IDPayload{
+		ID:    protected.ID,
+		Scope: protected.Scope,
+	})
+}
+
+func protectedPayloadFromClaims(claims jwt.MapClaims) (ProtectedPayload, []ValidationError) {
+	var payload ProtectedPayload
+	var errs []ValidationError
+
+	id, ok := claims["id"].(string)
+	if ok {
+		payload.ID = id
+	}
+
+	exp, ok := claimInt64(claims["exp"])
+	if ok {
+		payload.Exp = exp
+	}
+
+	if rawScope, ok := claims["scope"]; ok {
+		scope, scopeErrs := scopeFromClaim(rawScope)
+		if len(scopeErrs) > 0 {
+			errs = append(errs, scopeErrs...)
+		} else {
+			payload.Scope = scope
+		}
+	}
+
+	errs = append(errs, ValidateProtectedPayload(payload)...)
+	return payload, errs
+}
+
+func claimInt64(value any) (int64, bool) {
+	switch typed := value.(type) {
+	case float64:
+		if typed <= 0 || math.Trunc(typed) != typed {
+			return 0, false
+		}
+		return int64(typed), true
+	case int64:
+		return typed, typed > 0
+	case int:
+		return int64(typed), typed > 0
+	default:
+		return 0, false
+	}
+}
+
+func scopeFromClaim(value any) (map[string]ScopeValue, []ValidationError) {
+	rawScope, ok := value.(map[string]any)
+	if !ok {
+		return nil, []ValidationError{{
+			Message: "scope must be an object",
+			Path:    "scope",
+		}}
+	}
+
+	scope := make(map[string]ScopeValue, len(rawScope))
+	var errs []ValidationError
+	for key, rawValue := range rawScope {
+		values, valueErrs := scopeValueFromClaim(key, rawValue)
+		if len(valueErrs) > 0 {
+			errs = append(errs, valueErrs...)
+			continue
+		}
+		scope[key] = values
+	}
+	return scope, errs
+}
+
+func scopeValueFromClaim(key string, value any) (ScopeValue, []ValidationError) {
+	switch typed := value.(type) {
+	case string:
+		return ScopeValue{typed}, nil
+	case []any:
+		values := make(ScopeValue, 0, len(typed))
+		for index, rawItem := range typed {
+			item, ok := rawItem.(string)
+			if !ok {
+				return nil, []ValidationError{{
+					Message: "scope value must be a string",
+					Path:    fmt.Sprintf("scope.%s[%d]", key, index),
+				}}
+			}
+			values = append(values, item)
+		}
+		return values, nil
+	case []string:
+		return append(ScopeValue(nil), typed...), nil
+	default:
+		return nil, []ValidationError{{
+			Message: "scope value must be a string or string list",
+			Path:    "scope." + key,
+		}}
+	}
 }
 
 func signingMethodForStrength(strength EncryptionStrength) (jwt.SigningMethod, error) {
