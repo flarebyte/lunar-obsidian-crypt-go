@@ -1,8 +1,11 @@
 package lunarcrypt
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"math"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -51,6 +54,12 @@ func translucentLizardVerifyID(prefix string, cypher TranslucentLizardCypher, fu
 
 	claims, verifyErr := verifyClaims(token, cypher.Secret, cypher.Strength)
 	if verifyErr != nil {
+		if isDecodeTokenError(token) {
+			return Fail[IDPayload](CryptError{
+				Step:    StepVerifyIDDecodeToken,
+				Message: "The JWT token could not be decoded",
+			})
+		}
 		if len(cypher.AltSecret) > 0 {
 			altClaims, altErr := verifyClaims(token, cypher.AltSecret, cypher.Strength)
 			if altErr == nil {
@@ -69,6 +78,24 @@ func translucentLizardVerifyID(prefix string, cypher TranslucentLizardCypher, fu
 	}
 
 	return payloadFromVerifiedClaims(claims, cypher)
+}
+
+func isDecodeTokenError(token string) bool {
+	parts := strings.Split(token, ".")
+	if len(parts) != 3 {
+		return true
+	}
+	for _, part := range parts[:2] {
+		decoded, err := base64.RawURLEncoding.DecodeString(part)
+		if err != nil {
+			return true
+		}
+		var value any
+		if err := json.Unmarshal(decoded, &value); err != nil {
+			return true
+		}
+	}
+	return false
 }
 
 func payloadFromVerifiedClaims(claims jwt.MapClaims, cypher TranslucentLizardCypher) Result[IDPayload] {

@@ -99,6 +99,13 @@ func TestContractVerifyFailureSteps(t *testing.T) {
 			wantStep: StepVerifyIDExtractToken,
 		},
 		{
+			name: "decode-token",
+			verify: func() Result[IDPayload] {
+				return crypt.VerifyID(composeFullToken(fixture.ProductPrefix, "not-a-jwt"))
+			},
+			wantStep: StepVerifyIDDecodeToken,
+		},
+		{
 			name: "expired-token",
 			verify: func() Result[IDPayload] {
 				token := signContractClaims(t, fixture, jwt.MapClaims{

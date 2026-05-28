@@ -287,9 +287,9 @@ Ordered protocol steps.
 | prefix and JWT token | compose-full-token | prefix:jwt-token | Prefix is prepended outside the JWT with a colon separator | 5 |
 | full token | verifyId | Result<IdPayload CryptError> | Prefix is extracted then delegated to prefix-specific verification | 6 |
 | expected prefix and full token | extract-token | JWT token or extraction error | Embedded prefix must match the expected prefix | 7 |
-| JWT token | decode-and-validate | ProtectedPayload or validation error | Decoded payload must include id and exp | 8 |
-| ProtectedPayload and cypher scope policy | check-scope | scope accepted or verification error | Expected scope and custom validator are checked before signature verification | 9 |
-| JWT token and current or alternate secret | verify-signature | ProtectedPayload or verification error | Alternate secret is a fallback for rotation | 10 |
+| JWT token and current or alternate secret | verify-signature | Verified JWT claims or verification error | Go verifies signature algorithm expiration and signature before accepting claims or scope | 8 |
+| Verified JWT claims | decode-and-validate | ProtectedPayload or validation error | Decoded verified claims must include id and exp | 9 |
+| ProtectedPayload and cypher scope policy | check-scope | scope accepted or verification error | Expected scope and custom validator are checked only after signature verification | 10 |
 | ProtectedPayload | return-payload | IdPayload | The exp claim is removed from the application payload | 11 |
 
 ### 02 Operation Graph
@@ -316,7 +316,7 @@ Stable error steps and expected failure shape.
 | message | signing | sign-id/sign | JWT library cannot sign the token |
 | message | verification | verify-id/extract-token | Full token has no prefix unsupported prefix wrong prefix or missing token |
 | message | verification | verify-id/store | Requested verification prefix is not configured |
-| message | verification | verify-id/decode-token | Reserved for token decoding failures |
+| message | verification | verify-id/decode-token | JWT cannot be decoded or parsed far enough to inspect claims before validation |
 | validation errors with message and path | verification | verify-id/validate-payload | Decoded JWT payload fails ProtectedPayload validation |
 | message | verification | verify-id/verify-scope | Scope is missing mismatched or rejected by validator |
 | message and optional finalMessage | verification | verify-id/verify-token | JWT is expired has a bad signature or cannot be verified |
@@ -482,7 +482,8 @@ func (c *Crypt) VerifyIDByPrefix(prefix string, fullToken string) Result[IDPaylo
 | expiration | Convert Expiration to time.Duration and reject non-positive values or unknown units | Go callers should get deterministic validation before token creation |
 | jwt-library | Use a maintained JWT or JOSE library and explicitly restrict accepted methods to HS256 HS384 and HS512 | Prevents algorithm confusion and preserves the strength mapping |
 | token-parsing | Use strings.LastIndexByte(fullToken ':') to split prefix from JWT | Matches the final-colon rule and supports prefixes that contain colons |
-| verification-order | For compatibility decode and validate claims before signature verification but never return claims until verification succeeds | Matches the TypeScript behavior while keeping trust boundaries explicit |
+| verification-order | Verify JWT algorithm signature and expiration before accepting claims validating payload shape or checking scope | This intentionally favors Go trust boundaries over the TypeScript decode-before-verify order |
+| decode-token-errors | Use verify-id/decode-token only when a JWT cannot be decoded or parsed before claims validation | Separates malformed token structure from verified claims that fail payload validation |
 | alt-secret | Try the current secret first and only try AltSecret after current verification fails | Preserves rotation behavior and makes finalMessage meaningful when both secrets fail |
 | exp-stripping | Return IDPayload without Exp on successful verification | Keeps JWT protocol claims out of application payloads |
 | error-ids | Keep step strings byte-for-byte stable across Go and TypeScript | Allows cross-language tests and caller logic to rely on deterministic failures |
@@ -549,7 +550,5 @@ Implementation details that deserve explicit product decisions.
 #### Open Questions
 
 1. Should the protocol reserve a version field for future cypher kinds or token formats?
-2. Should scope policy run before or after signature verification in all future implementations?
-3. Should `verify-id/decode-token` become a required failure path for malformed JWTs?
-4. Should canonical JSON test vectors with fixed secrets and expiry times be generated from flyb metadata?
+2. Should canonical JSON test vectors with fixed secrets and expiry times be generated from flyb metadata?
 

@@ -133,7 +133,7 @@ func TestVerifyIDRejectsMalformedToken(t *testing.T) {
 	crypt := newTestCrypt(t, validStore([]byte("current-secret")))
 
 	got := crypt.VerifyID("product:not-a-jwt")
-	assertFailureStep(t, got, StepVerifyIDVerifyToken)
+	assertFailureStep(t, got, StepVerifyIDDecodeToken)
 }
 
 func TestVerifyIDRejectsInvalidPayload(t *testing.T) {

@@ -64,7 +64,7 @@ func TestSecurityRejectsMalformedCompactJWTs(t *testing.T) {
 	for _, token := range tests {
 		t.Run(token, func(t *testing.T) {
 			got := crypt.VerifyID(composeFullToken("product", token))
-			assertFailureStep(t, got, StepVerifyIDVerifyToken)
+			assertFailureStep(t, got, StepVerifyIDDecodeToken)
 		})
 	}
 }
