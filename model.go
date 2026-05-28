@@ -1,5 +1,11 @@
 package lunarcrypt
 
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+)
+
 type TimeUnit string
 
 const (
@@ -37,6 +43,30 @@ type Expiration struct {
 }
 
 type ScopeValue []string
+
+func (s *ScopeValue) UnmarshalJSON(data []byte) error {
+	if bytes.Equal(data, []byte("null")) {
+		return fmt.Errorf("scope value must be a string or string list")
+	}
+
+	var single string
+	if err := json.Unmarshal(data, &single); err == nil {
+		*s = ScopeValue{single}
+		return nil
+	}
+
+	var values []string
+	if err := json.Unmarshal(data, &values); err == nil {
+		*s = append((*s)[:0], values...)
+		return nil
+	}
+
+	return fmt.Errorf("scope value must be a string or string list")
+}
+
+func (s ScopeValue) MarshalJSON() ([]byte, error) {
+	return json.Marshal([]string(s))
+}
 
 type IDPayload struct {
 	ID    string                `json:"id"`
