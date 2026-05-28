@@ -6,8 +6,6 @@ Sign and verify application IDs as prefixed JWT tokens in Go.
 
 This project is a Go port of the TypeScript library
 [`lunar-obsidian-crypt`](https://github.com/flarebyte/lunar-obsidian-crypt).
-It is currently in the specification stage. The intended API is documented
-below so consumers can review the library shape before the first implementation.
 
 ## What It Does
 
@@ -36,20 +34,19 @@ JWT payloads are visible to anyone who holds the token. Do not put passwords,
 API keys, secrets, or private user data in the payload. Store only identifiers
 and scope values that are safe to reveal.
 
-## Planned Installation
-
-After the first release:
+## Installation
 
 ```bash
 go get github.com/flarebyte/lunar-obsidian-crypt-go
 ```
 
-The planned JWT implementation dependency is
+The JWT implementation dependency is
 [`github.com/golang-jwt/jwt/v5`](https://pkg.go.dev/github.com/golang-jwt/jwt/v5).
 
 ## Basic Usage
 
-Create a store with one or more prefixes:
+Create a store with one or more prefixes. Plain `Store` structs are the most
+transparent setup path and work well in tests:
 
 ```go
 package main
@@ -90,8 +87,8 @@ func main() {
 }
 ```
 
-The first Go release is planned to support both plain `Store` structs and an
-ergonomic builder API. The same setup should also be possible with a builder:
+The builder API is a guided setup path. It produces the same plain `Store`
+model, which is still validated by `New`:
 
 ```go
 store, err := lunarcrypt.NewBuilder().

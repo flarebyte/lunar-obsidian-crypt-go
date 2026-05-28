@@ -49,6 +49,23 @@ func TestBuilderRejectsDuplicatePrefixes(t *testing.T) {
 	}
 }
 
+func TestBuilderRejectsInvalidInputsThroughStoreValidation(t *testing.T) {
+	secret := "current-secret"
+	_, err := NewBuilder().
+		SetTitle("Business ID signing store").
+		AddTranslucentLizard("", validCypher([]byte(secret))).
+		Build()
+	if err == nil {
+		t.Fatal("Build() error = nil, want invalid prefix error")
+	}
+	if !strings.Contains(err.Error(), "prefix is required") {
+		t.Fatalf("Build() error = %q, want prefix validation error", err)
+	}
+	if strings.Contains(err.Error(), secret) {
+		t.Fatalf("Build() error leaked secret: %q", err)
+	}
+}
+
 func TestBuilderStoreIsIndependent(t *testing.T) {
 	cypher := validCypher([]byte("current-secret"))
 	builder := NewBuilder().
