@@ -408,6 +408,26 @@ type Store struct {
 	Cyphers map[string]TranslucentLizardCypher
 }
 
+type Builder struct {
+	store Store
+}
+
+func NewBuilder() *Builder {
+	return nil
+}
+
+func (b *Builder) SetTitle(title string) *Builder {
+	return b
+}
+
+func (b *Builder) AddTranslucentLizard(prefix string, cypher TranslucentLizardCypher) *Builder {
+	return b
+}
+
+func (b *Builder) Build() (Store, error) {
+	return Store{}, nil
+}
+
 type ValidationError struct {
 	Message string `json:"message"`
 	Path    string `json:"path"`
@@ -453,6 +473,7 @@ func (c *Crypt) VerifyIDByPrefix(prefix string, fullToken string) Result[IDPaylo
 | decision | go_guidance | rationale |
 | --- | --- | --- |
 | api-shape | Expose a small synchronous API with New Store SignID VerifyID and VerifyIDByPrefix | HMAC signing and verification are CPU-local operations and do not need context unless a future key provider is introduced |
+| configuration-api | Include both plain Store structs and an ergonomic Builder API in the first Go release | Plain structs keep configuration transparent and testable while the builder gives users a safer guided setup path |
 | result-shape | Return Result[T] values instead of Go errors for expected signing and verification failures | Preserves the TypeScript railway-style contract and keeps callers branching on status |
 | constructor-validation | Return (*Crypt error) from New when store configuration is invalid | Configuration errors are programmer/setup failures and should be caught before runtime signing |
 | payload-validation | Return failure Result values for invalid payloads passed to SignID or decoded from tokens | Payload failures are part of normal data handling and map to stable protocol steps |
@@ -486,7 +507,7 @@ Focused files and responsibilities for the Go implementation.
 | --- | --- | --- | --- |
 | crypt.go | New SignID VerifyID VerifyIDByPrefix | Own the Crypt type and route SignID VerifyID and VerifyIDByPrefix calls | unsupported prefixes and cypher dispatch |
 | model.go | domain structs constants and generic Result | Define Store Cypher Expiration IDPayload ProtectedPayload Result CryptError and ValidationError | JSON field names zero values and validation constraints |
-| builder.go | Builder or NewStore helper | Offer ergonomic construction helpers without hiding the validated Store model | prefix registration title constraints and duplicate prefixes |
+| builder.go | NewBuilder SetTitle AddTranslucentLizard Build | Offer ergonomic construction helpers without hiding the validated Store model | prefix registration title constraints duplicate prefixes and equivalence with plain Store setup |
 | translucent_lizard.go | internal sign and verify functions | Implement HMAC JWT signing and verification for the translucent-lizard cypher | algorithm mapping expiration alt secret fallback and exp stripping |
 | token.go | extractTokenPrefix extractToken composeFullToken | Parse and compose prefixed JWT tokens | final-colon splitting wrong prefix empty prefix and missing token |
 | scope.go | checkScope helper | Compare expected scope and run custom scope validators | string and string-list equality missing scope and custom validator errors |
@@ -530,6 +551,5 @@ Implementation details that deserve explicit product decisions.
 1. Should the protocol reserve a version field for future cypher kinds or token formats?
 2. Should scope policy run before or after signature verification in all future implementations?
 3. Should `verify-id/decode-token` become a required failure path for malformed JWTs?
-4. Should the first Go release include a builder API, plain structs only, or both?
-5. Should canonical JSON test vectors with fixed secrets and expiry times be generated from flyb metadata?
+4. Should canonical JSON test vectors with fixed secrets and expiry times be generated from flyb metadata?
 

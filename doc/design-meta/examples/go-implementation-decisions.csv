@@ -1,5 +1,6 @@
 decision,go_guidance,rationale
 api-shape,Expose a small synchronous API with New Store SignID VerifyID and VerifyIDByPrefix,HMAC signing and verification are CPU-local operations and do not need context unless a future key provider is introduced
+configuration-api,Include both plain Store structs and an ergonomic Builder API in the first Go release,Plain structs keep configuration transparent and testable while the builder gives users a safer guided setup path
 result-shape,Return Result[T] values instead of Go errors for expected signing and verification failures,Preserves the TypeScript railway-style contract and keeps callers branching on status
 constructor-validation,Return (*Crypt error) from New when store configuration is invalid,Configuration errors are programmer/setup failures and should be caught before runtime signing
 payload-validation,Return failure Result values for invalid payloads passed to SignID or decoded from tokens,Payload failures are part of normal data handling and map to stable protocol steps

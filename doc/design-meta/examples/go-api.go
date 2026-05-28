@@ -74,6 +74,26 @@ type Store struct {
 	Cyphers map[string]TranslucentLizardCypher
 }
 
+type Builder struct {
+	store Store
+}
+
+func NewBuilder() *Builder {
+	return nil
+}
+
+func (b *Builder) SetTitle(title string) *Builder {
+	return b
+}
+
+func (b *Builder) AddTranslucentLizard(prefix string, cypher TranslucentLizardCypher) *Builder {
+	return b
+}
+
+func (b *Builder) Build() (Store, error) {
+	return Store{}, nil
+}
+
 type ValidationError struct {
 	Message string `json:"message"`
 	Path    string `json:"path"`

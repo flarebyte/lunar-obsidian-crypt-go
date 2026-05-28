@@ -90,6 +90,30 @@ func main() {
 }
 ```
 
+The first Go release is planned to support both plain `Store` structs and an
+ergonomic builder API. The same setup should also be possible with a builder:
+
+```go
+store, err := lunarcrypt.NewBuilder().
+	SetTitle("Business ID signing store").
+	AddTranslucentLizard("product", lunarcrypt.TranslucentLizardCypher{
+		Kind:       lunarcrypt.TranslucentLizard,
+		Title:      "Sign product IDs",
+		Secret:     []byte("replace-with-a-long-random-secret"),
+		Strength:   lunarcrypt.Sufficient,
+		Expiration: lunarcrypt.Expiration{Value: 2, Unit: lunarcrypt.Hours},
+	}).
+	Build()
+if err != nil {
+	log.Fatal(err)
+}
+
+crypt, err := lunarcrypt.New(store)
+if err != nil {
+	log.Fatal(err)
+}
+```
+
 ## Sign An ID
 
 ```go
