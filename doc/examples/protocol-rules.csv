@@ -1,0 +1,14 @@
+rule,area,normative_statement,rationale
+full-token-format,token syntax,A full token MUST be encoded as prefix:jwt-token.,The prefix is outside the JWT and selects the cypher configuration
+prefix-splitting,token syntax,The verifier MUST treat the text after the final colon as the JWT token and the text before it as the prefix.,This permits prefixes that themselves contain colons
+prefix-selection,verification,verifyId MUST reject a token whose extracted prefix is empty or unsupported.,A token cannot be safely verified without a known cypher
+explicit-prefix-verification,verification,verifyIdByPrefix MUST reject a full token whose embedded prefix differs from the requested prefix.,Callers cannot accidentally verify a token under a different namespace
+visible-payload,security,The protocol MUST be described as signing rather than encryption because JWT payload fields are visible.,Prevents callers from storing secrets in the payload
+payload-validation,signing,Signing MUST validate the ID payload before creating a JWT.,Invalid payloads should fail before any cryptographic operation
+expiration-claim,signing,Signing MUST add a relative expiration claim to the JWT.,Verified tokens need a bounded lifetime
+scope-subset,verification,When expectedScope is configured every expected key MUST match the decoded scope value.,The configured scope is a mandatory subset rather than a full equality check
+scope-validator,verification,When a custom scope validator is configured the decoded payload MUST include scope and the validator MUST return true.,Allows language implementations to attach local policy
+verify-current-secret,verification,Verification MUST first try the current secret.,Normal traffic should use the active secret
+verify-alt-secret,verification,Verification MAY try altSecret only after current-secret verification fails.,Supports secret rotation without masking current-secret success
+strip-exp,success result,Successful verification MUST return the ID payload without exposing exp as an application field.,Expiration is a protocol claim rather than part of the domain payload
+error-result,errors,Operations MUST return structured failure results instead of throwing for expected validation and verification failures.,Makes behavior portable across languages

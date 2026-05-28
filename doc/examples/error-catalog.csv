@@ -1,0 +1,10 @@
+step,phase,trigger,error_shape
+sign-id/store,signing,Requested signing prefix is not configured,message
+sign-id/validate-payload,signing,Input payload fails IdPayload validation,validation errors with message and path
+sign-id/sign,signing,JWT library cannot sign the token,message
+verify-id/extract-token,verification,Full token has no prefix unsupported prefix wrong prefix or missing token,message
+verify-id/store,verification,Requested verification prefix is not configured,message
+verify-id/decode-token,verification,Reserved for token decoding failures,message
+verify-id/validate-payload,verification,Decoded JWT payload fails ProtectedPayload validation,validation errors with message and path
+verify-id/verify-scope,verification,Scope is missing mismatched or rejected by validator,message
+verify-id/verify-token,verification,JWT is expired has a bad signature or cannot be verified,message and optional finalMessage

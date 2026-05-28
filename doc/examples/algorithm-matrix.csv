@@ -1,0 +1,4 @@
+strength,jwt_algorithm,minimum_semantics,implementation_note
+sufficient,HS256,HMAC with SHA-256,Default fallback in the TypeScript implementation
+good,HS384,HMAC with SHA-384,Use a JOSE-compatible JWT library in each target language
+strong,HS512,HMAC with SHA-512,Use the same protected header alg value across implementations

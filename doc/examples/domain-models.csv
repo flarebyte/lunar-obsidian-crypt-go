@@ -1,0 +1,19 @@
+model,field,type,required,constraints,description
+Store,title,string,yes,1-50 single-line characters,Human-readable store title
+Store,cyphers,map<prefix Cypher>,yes,prefix keys are stable string key names,Named signing configurations addressable by token prefix
+Cypher,kind,string literal,yes,translucent-lizard,Discriminator for the cypher protocol
+TranslucentLizard,title,string,yes,1-50 single-line characters,Human-readable signing purpose
+TranslucentLizard,secret,byte array,yes,long random secret recommended,Shared secret used for HMAC signing and verification
+TranslucentLizard,altSecret,byte array,no,long random previous secret recommended,Previous secret accepted for rotation fallback
+TranslucentLizard,strength,enum,yes,sufficient|good|strong,Security level mapped to a JWT HMAC algorithm
+TranslucentLizard,expiration,Expiration,yes,value and unit,Relative lifetime applied when signing
+TranslucentLizard,expectedScope,map<string ScopeValue>,no,string keys and string or string-list values,Subset of scope values required at verification time
+TranslucentLizard,scopeValidator,function,no,scope -> true or reason string,Implementation-provided additional scope policy
+Expiration,value,integer,yes,1..1000000,Positive relative expiration quantity
+Expiration,unit,enum,yes,seconds|minutes|hours|days|weeks,Relative expiration unit
+IdPayload,id,string,yes,1-400 characters,Application resource identifier
+IdPayload,scope,map<string ScopeValue>,no,string keys and string or string-list values,Optional authorization or tenant context
+ProtectedPayload,exp,number,yes,positive safe number,JWT expiration claim required after decoding
+Result,status,enum,yes,success|failure,Railway-style operation status
+Success,value,generic,yes,matches operation success type,Returned when status is success
+Failure,error,CryptError,yes,matches failure schema,Returned when status is failure

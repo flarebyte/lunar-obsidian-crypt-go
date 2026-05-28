@@ -1,0 +1,9 @@
+concern,portable_spec,typescript_mapping,go_mapping_guidance
+result handling,Return success or failure as data,Discriminated union with status,Struct with Status plus Value or Error fields
+byte secrets,Secrets are opaque byte arrays,Uint8Array,[]byte
+time expiration,Relative expiration is value plus unit,string passed to JOSE setExpirationTime,time.Duration derived from value and unit
+jwt library,Use JOSE-compatible HMAC JWT implementation,jose package,golang-jwt or another JOSE-compatible library
+validation,Validate store config and payload shape before use,zod and faora-kai,Constructor validation or explicit validation functions
+scope validator,Allow local policy over decoded scope,function returning true or reason string,function returning nil or error string
+prefix parsing,Split full token at the final colon,split reverse join,LastIndexByte or equivalent
+token visibility,Payload is signed and visible not encrypted,JWS compact token,JWS compact token
