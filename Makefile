@@ -21,3 +21,11 @@ check-tools: ## Report required tool availability.
 
 install-tools-help: ## Show how to install required tools.
 	@printf '%s\n' "flyb: install the baldrick-flying-buttress CLI and ensure the flyb executable is on PATH"
+
+thoth-meta: thoth-meta-go thoth-meta-go-test
+
+thoth-meta-go:
+        $(THOTH) run --config ./pipeline-go-maat.thoth.cue
+
+thoth-meta-go-test:
+        $(THOTH) run --config ./pipeline-go-test-maat.thoth.cue
