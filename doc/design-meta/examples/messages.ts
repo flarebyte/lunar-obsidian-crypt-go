@@ -30,7 +30,7 @@ export const signRequest = {
 
 export const signSuccess = {
   status: 'success',
-  value: 'product:eyJhbGciOiJIUzI1NiJ9.eyJpZCI6InByb2R1Y3QxMjMiLCJleHAiOjE3MDAwMDAwMDB9.signature',
+  value: 'product:<signed-id-token>',
 } as const;
 
 export const verifyRequest = {
