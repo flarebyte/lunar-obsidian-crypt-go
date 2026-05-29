@@ -11,6 +11,7 @@ meta:
     - TestVerifyClaimsRejectsNoneAlgorithm
     - fixedNow
     - jwtHeaderAlg
+    - signingAlgorithmCases
   import_files_list:
     - encoding/base64
     - encoding/json

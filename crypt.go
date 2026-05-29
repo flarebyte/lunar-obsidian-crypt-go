@@ -1,3 +1,12 @@
+/*
+Purpose: Owns the public Crypt runtime that signs and verifies prefixed ID tokens against a validated immutable store.
+Responsibilities:
+- Validate and clone stores, index configured prefixes, dispatch SignID and VerifyID calls, and protect internal secrets from caller mutation.
+- Route supported cypher operations to the translucent-lizard implementation.
+Architecture notes:
+- Store and cypher values are defensively cloned at construction and builder boundaries because secrets and scopes contain slices or maps.
+- The now function is held on Crypt for deterministic tests while production construction defaults it to time.Now.
+*/
 package lunarcrypt
 
 import "time"

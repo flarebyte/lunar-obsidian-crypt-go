@@ -1,3 +1,12 @@
+/*
+Purpose: Defines input validation rules for stores, cyphers, expirations, and payload shapes before signing or accepting verified claims.
+Responsibilities:
+- Convert expiration settings to durations, validate store configuration, validate payload fields, and report field-level validation errors.
+- Enforce limits for titles, IDs, supported strengths, prefixes, secrets, and expected scope values.
+Architecture notes:
+- Store validation returns ordinary errors for configuration failures, while payload validation returns ValidationError slices for API result details.
+- Expiration values are capped before duration conversion to keep configuration mistakes bounded and explicit.
+*/
 package lunarcrypt
 
 import (

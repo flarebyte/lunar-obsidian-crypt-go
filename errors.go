@@ -1,3 +1,11 @@
+/*
+Purpose: Centralizes stable operation step identifiers and result constructors for API success and failure responses.
+Responsibilities:
+- Name sign and verify failure steps, construct success results, and attach CryptError details to failure results.
+Architecture notes:
+- Step strings are part of the observable contract used by tests, docs, and callers; avoid renaming without a compatibility decision.
+- Result construction stays tiny here so domain files can return consistent envelopes without duplicating status wiring.
+*/
 package lunarcrypt
 
 const (

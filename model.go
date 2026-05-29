@@ -1,3 +1,12 @@
+/*
+Purpose: Defines the public data model for configuring stores, passing ID payloads, and returning stable results from lunarcrypt APIs.
+Responsibilities:
+- Declare public enums, payload structs, store structs, error structs, and generic result wrappers.
+- Normalize JSON scope values so string and string-list inputs share one internal representation.
+Architecture notes:
+- Keep this file behavior-light; validation, token parsing, and cryptographic operations belong in dedicated files.
+- ScopeValue intentionally marshals as a string list even when decoded from a single string.
+*/
 package lunarcrypt
 
 import (

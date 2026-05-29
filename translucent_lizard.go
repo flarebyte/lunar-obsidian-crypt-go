@@ -1,3 +1,12 @@
+/*
+Purpose: Implements the translucent-lizard cypher for HMAC JWT signing, verification, claim extraction, and secret rotation fallback.
+Responsibilities:
+- Sign ID payload claims, verify compact JWTs with current or alternate secrets, map strength to HMAC algorithms, and convert verified claims back to payloads.
+- Distinguish decode, verification, payload validation, and scope failures using stable CryptError steps.
+Architecture notes:
+- Claims are validated only after JWT algorithm, signature, and expiration checks pass, preserving the trust boundary around unverified token content.
+- Alternate secrets are verify-only to support rotation without allowing new tokens to be signed with the previous secret.
+*/
 package lunarcrypt
 
 import (

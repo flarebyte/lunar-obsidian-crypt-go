@@ -10,6 +10,7 @@ meta:
     - loadContractFixtures
     - newContractCrypt
     - newContractCryptWithAltSecret
+    - signAndVerifyContractScope
     - signContractClaims
   import_files_list:
     - encoding/json

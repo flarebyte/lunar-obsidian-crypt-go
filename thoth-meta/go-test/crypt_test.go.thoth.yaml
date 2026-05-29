@@ -18,6 +18,8 @@ meta:
     - TestVerifyIDRejectsWrongAlgorithm
     - TestVerifyIDSuccess
     - newTestCrypt
+    - signProductClaim
+    - validStoreWithAltSecret
   import_files_list:
     - errors
     - github.com/golang-jwt/jwt/v5

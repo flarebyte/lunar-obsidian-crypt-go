@@ -1,3 +1,12 @@
+/*
+Purpose: Provides a fluent construction path for validated Store values without exposing mutable setup details to callers.
+Responsibilities:
+- Create builders, set store titles, register translucent-lizard cyphers, reject duplicate prefixes, and build validated stores.
+- Clone cypher input before storing it so later caller mutation does not alter the builder state.
+Architecture notes:
+- Builder methods are nil-safe and error-sticky so chained calls remain simple after the first configuration failure.
+- Kind defaults to TranslucentLizard here, while full structural validation remains owned by validation.go.
+*/
 package lunarcrypt
 
 import "fmt"

@@ -1,3 +1,11 @@
+/*
+Purpose: Handles the prefixed-token envelope that selects a cypher before JWT verification.
+Responsibilities:
+- Compose full tokens, split prefixes from compact tokens, enforce allowed or expected prefixes, and produce extract-token errors.
+Architecture notes:
+- Splitting uses the last colon so prefixes may themselves contain colons, such as tenant-qualified product prefixes.
+- This file does not decode or verify JWT content; cryptographic token semantics belong in translucent_lizard.go.
+*/
 package lunarcrypt
 
 import (

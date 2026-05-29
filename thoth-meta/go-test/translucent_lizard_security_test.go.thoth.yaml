@@ -6,6 +6,7 @@ meta:
     - TestSecurityRejectsTamperedSignature
     - TestSecurityRejectsUnexpectedClaimShapes
     - TestSecurityRejectsUnrelatedSecret
+    - signedTokenParts
   import_files_list:
     - encoding/base64
     - github.com/golang-jwt/jwt/v5

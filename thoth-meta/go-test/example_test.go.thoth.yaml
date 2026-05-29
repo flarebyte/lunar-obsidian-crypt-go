@@ -10,6 +10,8 @@ meta:
     - ExampleTranslucentLizardCypher_scopeValidator
     - ExampleTranslucentLizardCypher_secretRotation
     - exampleCrypt
+    - exampleProductCypher
+    - exampleStore
   import_files_list:
     - errors
     - github.com/flarebyte/lunar-obsidian-crypt-go

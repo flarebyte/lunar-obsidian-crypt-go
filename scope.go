@@ -1,3 +1,12 @@
+/*
+Purpose: Verifies signed payload scopes against configured exact expectations and optional caller-provided validation logic.
+Responsibilities:
+- Require scopes when policy needs them, compare expected scope values deterministically, and invoke custom ScopeValidator hooks.
+- Return verify-scope CryptError values with stable messages for failed scope checks.
+Architecture notes:
+- Scope comparison is exact and order-sensitive within each value list; this preserves caller intent instead of treating scopes as sets.
+- Keys are sorted before reporting mismatches so diagnostics remain deterministic.
+*/
 package lunarcrypt
 
 import (
