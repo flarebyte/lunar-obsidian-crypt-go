@@ -8,27 +8,19 @@ import (
 )
 
 func ExampleNew_plainStore() {
-	crypt, err := lunarcrypt.New(lunarcrypt.Store{
-		Title: "Business ID signing store",
-		Cyphers: map[string]lunarcrypt.TranslucentLizardCypher{
-			"product": {
-				Kind:       lunarcrypt.TranslucentLizard,
-				Title:      "Sign product IDs",
-				Secret:     []byte("replace-with-a-long-random-secret"),
-				Strength:   lunarcrypt.Sufficient,
-				Expiration: lunarcrypt.Expiration{Value: 2, Unit: lunarcrypt.Hours},
-			},
-			"company": {
-				Kind:          lunarcrypt.TranslucentLizard,
-				Title:         "Sign company IDs",
-				Secret:        []byte("replace-with-another-long-random-secret"),
-				AltSecret:     []byte("replace-with-previous-secret-during-rotation"),
-				Strength:      lunarcrypt.Strong,
-				Expiration:    lunarcrypt.Expiration{Value: 2, Unit: lunarcrypt.Weeks},
-				ExpectedScope: map[string]lunarcrypt.ScopeValue{"account": {"account890"}},
-			},
+	store := exampleStore(map[string]lunarcrypt.TranslucentLizardCypher{
+		"product": exampleProductCypher(),
+		"company": {
+			Kind:          lunarcrypt.TranslucentLizard,
+			Title:         "Sign company IDs",
+			Secret:        []byte("replace-with-another-long-random-secret"),
+			AltSecret:     []byte("replace-with-previous-secret-during-rotation"),
+			Strength:      lunarcrypt.Strong,
+			Expiration:    lunarcrypt.Expiration{Value: 2, Unit: lunarcrypt.Weeks},
+			ExpectedScope: map[string]lunarcrypt.ScopeValue{"account": {"account890"}},
 		},
 	})
+	crypt, err := lunarcrypt.New(store)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -114,19 +106,9 @@ func ExampleCrypt_VerifyIDByPrefix() {
 }
 
 func ExampleTranslucentLizardCypher_expectedScope() {
-	crypt, err := lunarcrypt.New(lunarcrypt.Store{
-		Title: "Business ID signing store",
-		Cyphers: map[string]lunarcrypt.TranslucentLizardCypher{
-			"product": {
-				Kind:          lunarcrypt.TranslucentLizard,
-				Title:         "Sign product IDs",
-				Secret:        []byte("replace-with-a-long-random-secret"),
-				Strength:      lunarcrypt.Sufficient,
-				Expiration:    lunarcrypt.Expiration{Value: 2, Unit: lunarcrypt.Hours},
-				ExpectedScope: map[string]lunarcrypt.ScopeValue{"account": {"account890"}},
-			},
-		},
-	})
+	cypher := exampleProductCypher()
+	cypher.ExpectedScope = map[string]lunarcrypt.ScopeValue{"account": {"account890"}}
+	crypt, err := lunarcrypt.New(exampleStore(map[string]lunarcrypt.TranslucentLizardCypher{"product": cypher}))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -135,24 +117,14 @@ func ExampleTranslucentLizardCypher_expectedScope() {
 }
 
 func ExampleTranslucentLizardCypher_scopeValidator() {
-	crypt, err := lunarcrypt.New(lunarcrypt.Store{
-		Title: "Business ID signing store",
-		Cyphers: map[string]lunarcrypt.TranslucentLizardCypher{
-			"product": {
-				Kind:       lunarcrypt.TranslucentLizard,
-				Title:      "Sign product IDs",
-				Secret:     []byte("replace-with-a-long-random-secret"),
-				Strength:   lunarcrypt.Sufficient,
-				Expiration: lunarcrypt.Expiration{Value: 2, Unit: lunarcrypt.Hours},
-				ScopeValidator: func(scope map[string]lunarcrypt.ScopeValue) error {
-					if len(scope["account"]) == 0 {
-						return errors.New("account is required")
-					}
-					return nil
-				},
-			},
-		},
-	})
+	cypher := exampleProductCypher()
+	cypher.ScopeValidator = func(scope map[string]lunarcrypt.ScopeValue) error {
+		if len(scope["account"]) == 0 {
+			return errors.New("account is required")
+		}
+		return nil
+	}
+	crypt, err := lunarcrypt.New(exampleStore(map[string]lunarcrypt.TranslucentLizardCypher{"product": cypher}))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -161,19 +133,10 @@ func ExampleTranslucentLizardCypher_scopeValidator() {
 }
 
 func ExampleTranslucentLizardCypher_secretRotation() {
-	crypt, err := lunarcrypt.New(lunarcrypt.Store{
-		Title: "Business ID signing store",
-		Cyphers: map[string]lunarcrypt.TranslucentLizardCypher{
-			"product": {
-				Kind:       lunarcrypt.TranslucentLizard,
-				Title:      "Sign product IDs",
-				Secret:     []byte("current-secret"),
-				AltSecret:  []byte("previous-secret"),
-				Strength:   lunarcrypt.Sufficient,
-				Expiration: lunarcrypt.Expiration{Value: 2, Unit: lunarcrypt.Hours},
-			},
-		},
-	})
+	cypher := exampleProductCypher()
+	cypher.Secret = []byte("current-secret")
+	cypher.AltSecret = []byte("previous-secret")
+	crypt, err := lunarcrypt.New(exampleStore(map[string]lunarcrypt.TranslucentLizardCypher{"product": cypher}))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -182,20 +145,28 @@ func ExampleTranslucentLizardCypher_secretRotation() {
 }
 
 func exampleCrypt() *lunarcrypt.Crypt {
-	crypt, err := lunarcrypt.New(lunarcrypt.Store{
-		Title: "Business ID signing store",
-		Cyphers: map[string]lunarcrypt.TranslucentLizardCypher{
-			"product": {
-				Kind:       lunarcrypt.TranslucentLizard,
-				Title:      "Sign product IDs",
-				Secret:     []byte("replace-with-a-long-random-secret"),
-				Strength:   lunarcrypt.Sufficient,
-				Expiration: lunarcrypt.Expiration{Value: 2, Unit: lunarcrypt.Hours},
-			},
-		},
-	})
+	crypt, err := lunarcrypt.New(exampleStore(map[string]lunarcrypt.TranslucentLizardCypher{
+		"product": exampleProductCypher(),
+	}))
 	if err != nil {
 		log.Fatal(err)
 	}
 	return crypt
+}
+
+func exampleStore(cyphers map[string]lunarcrypt.TranslucentLizardCypher) lunarcrypt.Store {
+	return lunarcrypt.Store{
+		Title:   "Business ID signing store",
+		Cyphers: cyphers,
+	}
+}
+
+func exampleProductCypher() lunarcrypt.TranslucentLizardCypher {
+	return lunarcrypt.TranslucentLizardCypher{
+		Kind:       lunarcrypt.TranslucentLizard,
+		Title:      "Sign product IDs",
+		Secret:     []byte("replace-with-a-long-random-secret"),
+		Strength:   lunarcrypt.Sufficient,
+		Expiration: lunarcrypt.Expiration{Value: 2, Unit: lunarcrypt.Hours},
+	}
 }

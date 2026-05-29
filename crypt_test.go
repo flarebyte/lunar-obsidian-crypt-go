@@ -166,13 +166,7 @@ func TestVerifyIDRejectsExpiredToken(t *testing.T) {
 
 func TestVerifyIDRejectsBadSignature(t *testing.T) {
 	crypt := newTestCrypt(t, validStore([]byte("current-secret")))
-	token, err := signClaims(jwt.MapClaims{
-		"id":  "product123",
-		"exp": fixedNow().Add(time.Hour).Unix(),
-	}, []byte("other-secret"), Sufficient)
-	if err != nil {
-		t.Fatalf("signClaims() error = %v", err)
-	}
+	token := signProductClaim(t, []byte("other-secret"), Sufficient)
 
 	got := crypt.VerifyID(composeFullToken("product", token))
 	assertFailureStep(t, got, StepVerifyIDVerifyToken)
@@ -180,13 +174,7 @@ func TestVerifyIDRejectsBadSignature(t *testing.T) {
 
 func TestVerifyIDRejectsWrongAlgorithm(t *testing.T) {
 	crypt := newTestCrypt(t, validStore([]byte("current-secret")))
-	token, err := signClaims(jwt.MapClaims{
-		"id":  "product123",
-		"exp": fixedNow().Add(time.Hour).Unix(),
-	}, []byte("current-secret"), Strong)
-	if err != nil {
-		t.Fatalf("signClaims() error = %v", err)
-	}
+	token := signProductClaim(t, []byte("current-secret"), Strong)
 
 	got := crypt.VerifyID(composeFullToken("product", token))
 	assertFailureStep(t, got, StepVerifyIDVerifyToken)
@@ -225,18 +213,8 @@ func TestVerifyIDRejectsCustomScopeValidatorFailure(t *testing.T) {
 }
 
 func TestVerifyIDAltSecretSuccess(t *testing.T) {
-	store := validStore([]byte("current-secret"))
-	cypher := store.Cyphers["product"]
-	cypher.AltSecret = []byte("previous-secret")
-	store.Cyphers["product"] = cypher
-	crypt := newTestCrypt(t, store)
-	token, err := signClaims(jwt.MapClaims{
-		"id":  "product123",
-		"exp": fixedNow().Add(time.Hour).Unix(),
-	}, []byte("previous-secret"), Sufficient)
-	if err != nil {
-		t.Fatalf("signClaims() error = %v", err)
-	}
+	crypt := newTestCrypt(t, validStoreWithAltSecret())
+	token := signProductClaim(t, []byte("previous-secret"), Sufficient)
 
 	got := crypt.VerifyID(composeFullToken("product", token))
 	if got.Status != Success {
@@ -248,24 +226,34 @@ func TestVerifyIDAltSecretSuccess(t *testing.T) {
 }
 
 func TestVerifyIDAltSecretFailure(t *testing.T) {
-	store := validStore([]byte("current-secret"))
-	cypher := store.Cyphers["product"]
-	cypher.AltSecret = []byte("previous-secret")
-	store.Cyphers["product"] = cypher
-	crypt := newTestCrypt(t, store)
-	token, err := signClaims(jwt.MapClaims{
-		"id":  "product123",
-		"exp": fixedNow().Add(time.Hour).Unix(),
-	}, []byte("other-secret"), Sufficient)
-	if err != nil {
-		t.Fatalf("signClaims() error = %v", err)
-	}
+	crypt := newTestCrypt(t, validStoreWithAltSecret())
+	token := signProductClaim(t, []byte("other-secret"), Sufficient)
 
 	got := crypt.VerifyID(composeFullToken("product", token))
 	assertFailureStep(t, got, StepVerifyIDVerifyToken)
 	if got.Error.FinalMessage != "Verification with previous secret failed as well" {
 		t.Fatalf("finalMessage = %q, want previous secret failure", got.Error.FinalMessage)
 	}
+}
+
+func signProductClaim(t *testing.T, secret []byte, strength EncryptionStrength) string {
+	t.Helper()
+	token, err := signClaims(jwt.MapClaims{
+		"id":  "product123",
+		"exp": fixedNow().Add(time.Hour).Unix(),
+	}, secret, strength)
+	if err != nil {
+		t.Fatalf("signClaims() error = %v", err)
+	}
+	return token
+}
+
+func validStoreWithAltSecret() Store {
+	store := validStore([]byte("current-secret"))
+	cypher := store.Cyphers["product"]
+	cypher.AltSecret = []byte("previous-secret")
+	store.Cyphers["product"] = cypher
+	return store
 }
 
 func newTestCrypt(t *testing.T, store Store) *Crypt {

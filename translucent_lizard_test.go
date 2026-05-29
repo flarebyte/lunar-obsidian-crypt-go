@@ -11,17 +11,7 @@ import (
 )
 
 func TestSigningMethodForStrength(t *testing.T) {
-	tests := []struct {
-		name     string
-		strength EncryptionStrength
-		wantAlg  string
-	}{
-		{name: "sufficient", strength: Sufficient, wantAlg: "HS256"},
-		{name: "good", strength: Good, wantAlg: "HS384"},
-		{name: "strong", strength: Strong, wantAlg: "HS512"},
-	}
-
-	for _, tt := range tests {
+	for _, tt := range signingAlgorithmCases("sufficient", "good", "strong") {
 		t.Run(tt.name, func(t *testing.T) {
 			method, err := signingMethodForStrength(tt.strength)
 			if err != nil {
@@ -41,17 +31,7 @@ func TestSigningMethodForStrengthRejectsUnknownStrength(t *testing.T) {
 }
 
 func TestSignClaimsUsesExpectedAlgorithm(t *testing.T) {
-	tests := []struct {
-		name     string
-		strength EncryptionStrength
-		wantAlg  string
-	}{
-		{name: "hs256", strength: Sufficient, wantAlg: "HS256"},
-		{name: "hs384", strength: Good, wantAlg: "HS384"},
-		{name: "hs512", strength: Strong, wantAlg: "HS512"},
-	}
-
-	for _, tt := range tests {
+	for _, tt := range signingAlgorithmCases("hs256", "hs384", "hs512") {
 		t.Run(tt.name, func(t *testing.T) {
 			tokenText, err := signClaims(jwt.MapClaims{"id": "product123"}, []byte("secret"), tt.strength)
 			if err != nil {
@@ -65,17 +45,7 @@ func TestSignClaimsUsesExpectedAlgorithm(t *testing.T) {
 }
 
 func TestTranslucentLizardSignIDCreatesPrefixedJWT(t *testing.T) {
-	tests := []struct {
-		name     string
-		strength EncryptionStrength
-		wantAlg  string
-	}{
-		{name: "hs256", strength: Sufficient, wantAlg: "HS256"},
-		{name: "hs384", strength: Good, wantAlg: "HS384"},
-		{name: "hs512", strength: Strong, wantAlg: "HS512"},
-	}
-
-	for _, tt := range tests {
+	for _, tt := range signingAlgorithmCases("hs256", "hs384", "hs512") {
 		t.Run(tt.name, func(t *testing.T) {
 			cypher := validCypher([]byte("current-secret"))
 			cypher.Strength = tt.strength
@@ -113,6 +83,20 @@ func TestTranslucentLizardSignIDCreatesPrefixedJWT(t *testing.T) {
 				t.Fatalf("scope account = %#v, want account890", scope["account"])
 			}
 		})
+	}
+}
+
+type signingAlgorithmCase struct {
+	name     string
+	strength EncryptionStrength
+	wantAlg  string
+}
+
+func signingAlgorithmCases(sufficientName, goodName, strongName string) []signingAlgorithmCase {
+	return []signingAlgorithmCase{
+		{name: sufficientName, strength: Sufficient, wantAlg: "HS256"},
+		{name: goodName, strength: Good, wantAlg: "HS384"},
+		{name: strongName, strength: Strong, wantAlg: "HS512"},
 	}
 }
 

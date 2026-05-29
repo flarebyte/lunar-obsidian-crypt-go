@@ -143,34 +143,20 @@ func TestContractScopeBehavior(t *testing.T) {
 		crypt := newContractCrypt(t, fixture, Sufficient, map[string]ScopeValue{
 			"account": {fixture.Account},
 		}, nil)
-		got := crypt.SignID(fixture.ProductPrefix, IDPayload{
+		signAndVerifyContractScope(t, crypt, fixture, IDPayload{
 			ID:    fixture.ProductID,
 			Scope: map[string]ScopeValue{"account": {fixture.Account}},
 		})
-		if got.Status != Success {
-			t.Fatalf("sign status = %q, error = %#v, want success", got.Status, got.Error)
-		}
-		verified := crypt.VerifyID(got.Value)
-		if verified.Status != Success {
-			t.Fatalf("verify status = %q, error = %#v, want success", verified.Status, verified.Error)
-		}
 	})
 
 	t.Run("scope-list-match", func(t *testing.T) {
 		crypt := newContractCrypt(t, fixture, Sufficient, map[string]ScopeValue{
 			"roles": ScopeValue(fixture.Roles),
 		}, nil)
-		got := crypt.SignID(fixture.ProductPrefix, IDPayload{
+		signAndVerifyContractScope(t, crypt, fixture, IDPayload{
 			ID:    fixture.ProductID,
 			Scope: map[string]ScopeValue{"roles": ScopeValue(fixture.Roles)},
 		})
-		if got.Status != Success {
-			t.Fatalf("sign status = %q, error = %#v, want success", got.Status, got.Error)
-		}
-		verified := crypt.VerifyID(got.Value)
-		if verified.Status != Success {
-			t.Fatalf("verify status = %q, error = %#v, want success", verified.Status, verified.Error)
-		}
 	})
 
 	t.Run("scope-missing", func(t *testing.T) {
@@ -199,6 +185,18 @@ func TestContractScopeBehavior(t *testing.T) {
 		verified := crypt.VerifyID(got.Value)
 		assertFailureStep(t, verified, StepVerifyIDVerifyScope)
 	})
+}
+
+func signAndVerifyContractScope(t *testing.T, crypt *Crypt, fixture contractFixtures, payload IDPayload) {
+	t.Helper()
+	got := crypt.SignID(fixture.ProductPrefix, payload)
+	if got.Status != Success {
+		t.Fatalf("sign status = %q, error = %#v, want success", got.Status, got.Error)
+	}
+	verified := crypt.VerifyID(got.Value)
+	if verified.Status != Success {
+		t.Fatalf("verify status = %q, error = %#v, want success", verified.Status, verified.Error)
+	}
 }
 
 func TestContractAltSecretBehavior(t *testing.T) {

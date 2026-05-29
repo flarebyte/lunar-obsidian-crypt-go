@@ -10,20 +10,7 @@ import (
 )
 
 func TestSecurityRejectsTamperedPayload(t *testing.T) {
-	crypt := newTestCrypt(t, validStore([]byte("current-secret")))
-	signResult := crypt.SignID("product", IDPayload{ID: "product123"})
-	if signResult.Status != Success {
-		t.Fatalf("sign status = %q, error = %#v, want success", signResult.Status, signResult.Error)
-	}
-
-	token, tokenErr := extractToken("product", signResult.Value)
-	if tokenErr != nil {
-		t.Fatalf("extractToken() error = %#v", tokenErr)
-	}
-	parts := strings.Split(token, ".")
-	if len(parts) != 3 {
-		t.Fatalf("JWT parts = %d, want 3", len(parts))
-	}
+	crypt, parts := signedTokenParts(t)
 	tamperedPayload := base64.RawURLEncoding.EncodeToString([]byte(`{"id":"product999","exp":4102452000}`))
 	tampered := parts[0] + "." + tamperedPayload + "." + parts[2]
 
@@ -32,6 +19,15 @@ func TestSecurityRejectsTamperedPayload(t *testing.T) {
 }
 
 func TestSecurityRejectsTamperedSignature(t *testing.T) {
+	crypt, parts := signedTokenParts(t)
+	tampered := parts[0] + "." + parts[1] + ".tampered-signature"
+
+	got := crypt.VerifyID(composeFullToken("product", tampered))
+	assertFailureStep(t, got, StepVerifyIDVerifyToken)
+}
+
+func signedTokenParts(t *testing.T) (*Crypt, []string) {
+	t.Helper()
 	crypt := newTestCrypt(t, validStore([]byte("current-secret")))
 	signResult := crypt.SignID("product", IDPayload{ID: "product123"})
 	if signResult.Status != Success {
@@ -46,10 +42,7 @@ func TestSecurityRejectsTamperedSignature(t *testing.T) {
 	if len(parts) != 3 {
 		t.Fatalf("JWT parts = %d, want 3", len(parts))
 	}
-	tampered := parts[0] + "." + parts[1] + ".tampered-signature"
-
-	got := crypt.VerifyID(composeFullToken("product", tampered))
-	assertFailureStep(t, got, StepVerifyIDVerifyToken)
+	return crypt, parts
 }
 
 func TestSecurityRejectsMalformedCompactJWTs(t *testing.T) {
