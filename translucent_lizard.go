@@ -247,17 +247,11 @@ func verifyClaims(tokenText string, secret []byte, strength EncryptionStrength) 
 	}
 
 	claims := jwt.MapClaims{}
-	token, err := jwt.ParseWithClaims(tokenText, claims, func(token *jwt.Token) (any, error) {
-		if token.Method.Alg() != expectedMethod.Alg() {
-			return nil, fmt.Errorf("unexpected signing method %q", token.Method.Alg())
-		}
+	_, err = jwt.ParseWithClaims(tokenText, claims, func(token *jwt.Token) (any, error) {
 		return secret, nil
 	}, jwt.WithValidMethods([]string{expectedMethod.Alg()}))
 	if err != nil {
 		return nil, err
-	}
-	if !token.Valid {
-		return nil, fmt.Errorf("token is invalid")
 	}
 	return claims, nil
 }

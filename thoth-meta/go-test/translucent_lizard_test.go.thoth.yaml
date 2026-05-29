@@ -1,14 +1,23 @@
 locator: translucent_lizard_test.go
 meta:
   function_list:
+    - TestClaimInt64
+    - TestIsDecodeTokenError
+    - TestScopeFromClaim
+    - TestScopeFromClaimRejectsInvalidShapes
+    - TestSignClaimsRejectsUnknownStrength
     - TestSignClaimsUsesExpectedAlgorithm
     - TestSigningMethodForStrength
     - TestSigningMethodForStrengthRejectsUnknownStrength
     - TestTranslucentLizardSignIDCreatesPrefixedJWT
+    - TestTranslucentLizardSignIDRejectsInvalidExpiration
+    - TestTranslucentLizardSignIDRejectsInvalidStrength
     - TestVerifyClaimsAcceptsMatchingHMACMethod
     - TestVerifyClaimsRejectsAlgorithmConfusion
     - TestVerifyClaimsRejectsNonHMACAlgorithm
     - TestVerifyClaimsRejectsNoneAlgorithm
+    - TestVerifyClaimsRejectsUnknownStrength
+    - TestVerifyClaimsRejectsUnsignedGarbage
     - fixedNow
     - jwtHeaderAlg
     - signingAlgorithmCases

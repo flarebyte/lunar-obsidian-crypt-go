@@ -24,6 +24,17 @@ func TestSignIDRejectsUnsupportedPrefix(t *testing.T) {
 	}
 }
 
+func TestSignIDRejectsUnsupportedCypherKind(t *testing.T) {
+	store := validStore([]byte("current-secret"))
+	cypher := store.Cyphers["product"]
+	cypher.Kind = CypherKind("unsupported")
+	store.Cyphers["product"] = cypher
+	crypt := &Crypt{store: store, prefixes: []string{"product"}, now: fixedNow}
+
+	got := crypt.SignID("product", IDPayload{ID: "product123"})
+	assertFailureStep(t, got, StepSignIDStore)
+}
+
 func TestSignIDRejectsInvalidPayload(t *testing.T) {
 	crypt := newTestCrypt(t, validStore([]byte("current-secret")))
 
@@ -120,6 +131,24 @@ func TestVerifyIDByPrefixRejectsWrongPrefix(t *testing.T) {
 
 	got := crypt.VerifyIDByPrefix("company", signResult.Value)
 	assertFailureStep(t, got, StepVerifyIDExtractToken)
+}
+
+func TestVerifyIDByPrefixRejectsUnsupportedPrefix(t *testing.T) {
+	crypt := newTestCrypt(t, validStore([]byte("current-secret")))
+
+	got := crypt.VerifyIDByPrefix("company", "company:header.payload.signature")
+	assertFailureStep(t, got, StepVerifyIDStore)
+}
+
+func TestVerifyIDByPrefixRejectsUnsupportedCypherKind(t *testing.T) {
+	store := validStore([]byte("current-secret"))
+	cypher := store.Cyphers["product"]
+	cypher.Kind = CypherKind("unsupported")
+	store.Cyphers["product"] = cypher
+	crypt := &Crypt{store: store, prefixes: []string{"product"}, now: fixedNow}
+
+	got := crypt.VerifyIDByPrefix("product", "product:header.payload.signature")
+	assertFailureStep(t, got, StepVerifyIDStore)
 }
 
 func TestVerifyIDRejectsUnknownPrefix(t *testing.T) {

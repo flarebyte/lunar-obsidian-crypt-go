@@ -5,6 +5,7 @@ meta:
     - TestExtractToken
     - TestExtractTokenPrefix
     - TestTokenExtractionErrorsDoNotIncludeFullToken
+    - TestUnsupportedPrefixError
     - assertTokenExtractionError
   import_files_list:
     - testing

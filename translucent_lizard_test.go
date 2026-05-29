@@ -44,6 +44,12 @@ func TestSignClaimsUsesExpectedAlgorithm(t *testing.T) {
 	}
 }
 
+func TestSignClaimsRejectsUnknownStrength(t *testing.T) {
+	if _, err := signClaims(jwt.MapClaims{"id": "product123"}, []byte("secret"), EncryptionStrength("weak")); err == nil {
+		t.Fatal("signClaims() error = nil, want unknown strength error")
+	}
+}
+
 func TestTranslucentLizardSignIDCreatesPrefixedJWT(t *testing.T) {
 	for _, tt := range signingAlgorithmCases("hs256", "hs384", "hs512") {
 		t.Run(tt.name, func(t *testing.T) {
@@ -84,6 +90,22 @@ func TestTranslucentLizardSignIDCreatesPrefixedJWT(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestTranslucentLizardSignIDRejectsInvalidExpiration(t *testing.T) {
+	cypher := validCypher([]byte("current-secret"))
+	cypher.Expiration = Expiration{Value: 0, Unit: Hours}
+
+	got := translucentLizardSignID("product", cypher, IDPayload{ID: "product123"}, fixedNow)
+	assertFailureStep(t, got, StepSignIDSign)
+}
+
+func TestTranslucentLizardSignIDRejectsInvalidStrength(t *testing.T) {
+	cypher := validCypher([]byte("current-secret"))
+	cypher.Strength = EncryptionStrength("weak")
+
+	got := translucentLizardSignID("product", cypher, IDPayload{ID: "product123"}, fixedNow)
+	assertFailureStep(t, got, StepSignIDSign)
 }
 
 type signingAlgorithmCase struct {
@@ -162,6 +184,105 @@ func TestVerifyClaimsRejectsNonHMACAlgorithm(t *testing.T) {
 
 	if _, err := verifyClaims(tokenText, []byte("secret"), Sufficient); err == nil {
 		t.Fatal("verifyClaims() error = nil, want non-HMAC algorithm rejection")
+	}
+}
+
+func TestVerifyClaimsRejectsUnknownStrength(t *testing.T) {
+	if _, err := verifyClaims("header.payload.signature", []byte("secret"), EncryptionStrength("weak")); err == nil {
+		t.Fatal("verifyClaims() error = nil, want unknown strength error")
+	}
+}
+
+func TestVerifyClaimsRejectsUnsignedGarbage(t *testing.T) {
+	if _, err := verifyClaims("header.payload.signature", []byte("secret"), Sufficient); err == nil {
+		t.Fatal("verifyClaims() error = nil, want parse error")
+	}
+}
+
+func TestIsDecodeTokenError(t *testing.T) {
+	validHeader := base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"HS256"}`))
+	validPayload := base64.RawURLEncoding.EncodeToString([]byte(`{"id":"product123"}`))
+	invalidJSON := base64.RawURLEncoding.EncodeToString([]byte("not-json"))
+
+	tests := []struct {
+		name string
+		in   string
+		want bool
+	}{
+		{name: "valid compact shape", in: validHeader + "." + validPayload + ".signature"},
+		{name: "invalid header base64", in: "*.payload.signature", want: true},
+		{name: "invalid payload base64", in: validHeader + ".not-base64.signature", want: true},
+		{name: "invalid payload json", in: validHeader + "." + invalidJSON + ".signature", want: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := isDecodeTokenError(tt.in); got != tt.want {
+				t.Fatalf("isDecodeTokenError() = %t, want %t", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestClaimInt64(t *testing.T) {
+	tests := []struct {
+		name string
+		in   any
+		want int64
+		ok   bool
+	}{
+		{name: "float", in: float64(42), want: 42, ok: true},
+		{name: "float zero", in: float64(0)},
+		{name: "float fractional", in: float64(1.5)},
+		{name: "int64", in: int64(42), want: 42, ok: true},
+		{name: "int64 negative", in: int64(-1), want: -1},
+		{name: "int", in: int(42), want: 42, ok: true},
+		{name: "int zero", in: int(0)},
+		{name: "string", in: "42"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, ok := claimInt64(tt.in)
+			if got != tt.want || ok != tt.ok {
+				t.Fatalf("claimInt64(%#v) = %d, %t; want %d, %t", tt.in, got, ok, tt.want, tt.ok)
+			}
+		})
+	}
+}
+
+func TestScopeFromClaim(t *testing.T) {
+	got, errs := scopeFromClaim(map[string]any{
+		"account": "account890",
+		"roles":   []any{"admin", "editor"},
+		"groups":  []string{"staff"},
+	})
+	if len(errs) > 0 {
+		t.Fatalf("scopeFromClaim() errors = %#v, want none", errs)
+	}
+	if got["account"][0] != "account890" || got["roles"][1] != "editor" || got["groups"][0] != "staff" {
+		t.Fatalf("scopeFromClaim() = %#v", got)
+	}
+}
+
+func TestScopeFromClaimRejectsInvalidShapes(t *testing.T) {
+	tests := []struct {
+		name     string
+		in       any
+		wantPath string
+	}{
+		{name: "not object", in: "scope", wantPath: "scope"},
+		{name: "list item not string", in: map[string]any{"roles": []any{"admin", 1}}, wantPath: "scope.roles[1]"},
+		{name: "unsupported value", in: map[string]any{"roles": []int{1}}, wantPath: "scope.roles"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, errs := scopeFromClaim(tt.in)
+			if len(errs) != 1 || errs[0].Path != tt.wantPath {
+				t.Fatalf("scopeFromClaim() errors = %#v, want path %q", errs, tt.wantPath)
+			}
+		})
 	}
 }
 

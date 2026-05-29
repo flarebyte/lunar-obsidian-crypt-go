@@ -101,6 +101,15 @@ func TestNewRejectsInvalidStore(t *testing.T) {
 			wantError: "prefix is required",
 		},
 		{
+			name: "multiline prefix",
+			mutate: func(store Store) Store {
+				cypher := store.Cyphers["product"]
+				store.Cyphers = map[string]TranslucentLizardCypher{"product\nid": cypher}
+				return store
+			},
+			wantError: "prefix must be a single line",
+		},
+		{
 			name: "invalid kind",
 			mutate: func(store Store) Store {
 				cypher := store.Cyphers["product"]
@@ -159,6 +168,36 @@ func TestNewRejectsInvalidStore(t *testing.T) {
 				return store
 			},
 			wantError: `expected scope "account" must include at least one value`,
+		},
+		{
+			name: "empty expected scope key",
+			mutate: func(store Store) Store {
+				cypher := store.Cyphers["product"]
+				cypher.ExpectedScope = map[string]ScopeValue{"": {"account890"}}
+				store.Cyphers["product"] = cypher
+				return store
+			},
+			wantError: "expected scope key is required",
+		},
+		{
+			name: "multiline expected scope key",
+			mutate: func(store Store) Store {
+				cypher := store.Cyphers["product"]
+				cypher.ExpectedScope = map[string]ScopeValue{"account\nid": {"account890"}}
+				store.Cyphers["product"] = cypher
+				return store
+			},
+			wantError: "expected scope key must be a single line",
+		},
+		{
+			name: "empty expected scope value",
+			mutate: func(store Store) Store {
+				cypher := store.Cyphers["product"]
+				cypher.ExpectedScope = map[string]ScopeValue{"account": {""}}
+				store.Cyphers["product"] = cypher
+				return store
+			},
+			wantError: `expected scope "account" value 0 is required`,
 		},
 	}
 

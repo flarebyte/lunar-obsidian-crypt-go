@@ -33,11 +33,13 @@ func TestBuilderBuildsPlainStore(t *testing.T) {
 
 func TestBuilderRejectsDuplicatePrefixes(t *testing.T) {
 	secret := "current-secret"
-	_, err := NewBuilder().
+	builder := NewBuilder().
 		SetTitle("Business ID signing store").
 		AddTranslucentLizard("product", validCypher([]byte(secret))).
-		AddTranslucentLizard("product", validCypher([]byte(secret))).
-		Build()
+		AddTranslucentLizard("product", validCypher([]byte(secret)))
+	builder.AddTranslucentLizard("company", validCypher([]byte(secret)))
+
+	_, err := builder.Build()
 	if err == nil {
 		t.Fatal("Build() error = nil, want duplicate prefix error")
 	}
@@ -46,6 +48,19 @@ func TestBuilderRejectsDuplicatePrefixes(t *testing.T) {
 	}
 	if strings.Contains(err.Error(), secret) {
 		t.Fatalf("Build() error leaked secret: %q", err)
+	}
+}
+
+func TestBuilderNilReceiverMethods(t *testing.T) {
+	var builder *Builder
+	if got := builder.SetTitle("Business ID signing store"); got != nil {
+		t.Fatalf("SetTitle() = %#v, want nil", got)
+	}
+	if got := builder.AddTranslucentLizard("product", validCypher([]byte("current-secret"))); got != nil {
+		t.Fatalf("AddTranslucentLizard() = %#v, want nil", got)
+	}
+	if _, err := builder.Build(); err == nil {
+		t.Fatal("Build() error = nil, want nil builder error")
 	}
 }
 

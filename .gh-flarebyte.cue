@@ -112,7 +112,7 @@ devOutput: {
 }
 
 coverage: {
-	min:        80
+	min:        95
 	enforceMin: true
 }
 

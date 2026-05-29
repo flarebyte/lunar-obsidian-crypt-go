@@ -3,6 +3,7 @@ meta:
   function_list:
     - TestBuilderAndPlainStoreAreEquivalent
     - TestBuilderBuildsPlainStore
+    - TestBuilderNilReceiverMethods
     - TestBuilderRejectsDuplicatePrefixes
     - TestBuilderRejectsInvalidInputsThroughStoreValidation
     - TestBuilderStoreIsIndependent

@@ -1,3 +1,6 @@
+//go:build design
+// +build design
+
 package lunarcrypt
 
 import "time"

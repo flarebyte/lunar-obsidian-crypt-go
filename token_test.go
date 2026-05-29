@@ -153,6 +153,11 @@ func TestTokenExtractionErrorsDoNotIncludeFullToken(t *testing.T) {
 	}
 }
 
+func TestUnsupportedPrefixError(t *testing.T) {
+	got := unsupportedPrefixError("company")
+	assertTokenExtractionError(t, got, `The token prefix "company" is not supported`)
+}
+
 func assertTokenExtractionError(t *testing.T, got *CryptError, wantMessage string) {
 	t.Helper()
 	if got == nil {

@@ -52,6 +52,7 @@ func TestSecurityRejectsMalformedCompactJWTs(t *testing.T) {
 		"two.parts",
 		"too.many.parts.here",
 		"not-base64.payload.signature",
+		base64.RawURLEncoding.EncodeToString([]byte("not-json")) + "." + base64.RawURLEncoding.EncodeToString([]byte(`{"id":"product123"}`)) + ".signature",
 	}
 
 	for _, token := range tests {

@@ -3,10 +3,13 @@ meta:
   function_list:
     - TestSignIDDoesNotLeakSecretInFailures
     - TestSignIDRejectsInvalidPayload
+    - TestSignIDRejectsUnsupportedCypherKind
     - TestSignIDRejectsUnsupportedPrefix
     - TestSignIDUsesCurrentSecretNotAltSecret
     - TestVerifyIDAltSecretFailure
     - TestVerifyIDAltSecretSuccess
+    - TestVerifyIDByPrefixRejectsUnsupportedCypherKind
+    - TestVerifyIDByPrefixRejectsUnsupportedPrefix
     - TestVerifyIDByPrefixRejectsWrongPrefix
     - TestVerifyIDRejectsBadSignature
     - TestVerifyIDRejectsCustomScopeValidatorFailure

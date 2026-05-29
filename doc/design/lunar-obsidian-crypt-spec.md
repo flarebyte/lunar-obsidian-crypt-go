@@ -332,6 +332,9 @@ Suggested public Go surface and domain types.
 #### Go API Sketch
 
 ```go
+//go:build design
+// +build design
+
 package lunarcrypt
 
 import "time"
