@@ -1,0 +1,8 @@
+locator: doc/design-meta/examples/go-api.go
+meta:
+  function_list:
+    - New
+    - NewBuilder
+  import_files_list:
+    - time
+  language: go

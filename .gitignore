@@ -24,6 +24,10 @@ profile.cov
 go.work
 go.work.sum
 
+# Repo-local Go caches used by automation
+.gocache/
+.gomodcache/
+
 # env file
 .env
 
@@ -33,3 +37,4 @@ go.work.sum
 
 scratch/
 temp/
+.gocache/

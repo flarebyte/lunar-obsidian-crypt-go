@@ -1,0 +1,18 @@
+locator: scope.go
+meta:
+  architecture_notes:
+    - Scope comparison is exact and order-sensitive within each value list; this preserves caller intent instead of treating scopes as sets.
+    - Keys are sorted before reporting mismatches so diagnostics remain deterministic.
+  function_list:
+    - checkScope
+    - mismatchedScopeKeys
+  import_files_list:
+    - fmt
+    - slices
+    - sort
+    - strings
+  language: go
+  purpose: Verifies signed payload scopes against configured exact expectations and optional caller-provided validation logic.
+  responsibilities:
+    - Require scopes when policy needs them, compare expected scope values deterministically, and invoke custom ScopeValidator hooks.
+    - Return verify-scope CryptError values with stable messages for failed scope checks.

@@ -244,7 +244,7 @@ export const signRequest = {
 
 export const signSuccess = {
   status: 'success',
-  value: 'product:eyJhbGciOiJIUzI1NiJ9.eyJpZCI6InByb2R1Y3QxMjMiLCJleHAiOjE3MDAwMDAwMDB9.signature',
+  value: 'product:<signed-id-token>',
 } as const;
 
 export const verifyRequest = {
@@ -287,9 +287,9 @@ Ordered protocol steps.
 | prefix and JWT token | compose-full-token | prefix:jwt-token | Prefix is prepended outside the JWT with a colon separator | 5 |
 | full token | verifyId | Result<IdPayload CryptError> | Prefix is extracted then delegated to prefix-specific verification | 6 |
 | expected prefix and full token | extract-token | JWT token or extraction error | Embedded prefix must match the expected prefix | 7 |
-| JWT token | decode-and-validate | ProtectedPayload or validation error | Decoded payload must include id and exp | 8 |
-| ProtectedPayload and cypher scope policy | check-scope | scope accepted or verification error | Expected scope and custom validator are checked before signature verification | 9 |
-| JWT token and current or alternate secret | verify-signature | ProtectedPayload or verification error | Alternate secret is a fallback for rotation | 10 |
+| JWT token and current or alternate secret | verify-signature | Verified JWT claims or verification error | Go verifies signature algorithm expiration and signature before accepting claims or scope | 8 |
+| Verified JWT claims | decode-and-validate | ProtectedPayload or validation error | Decoded verified claims must include id and exp | 9 |
+| ProtectedPayload and cypher scope policy | check-scope | scope accepted or verification error | Expected scope and custom validator are checked only after signature verification | 10 |
 | ProtectedPayload | return-payload | IdPayload | The exp claim is removed from the application payload | 11 |
 
 ### 02 Operation Graph
@@ -316,7 +316,7 @@ Stable error steps and expected failure shape.
 | message | signing | sign-id/sign | JWT library cannot sign the token |
 | message | verification | verify-id/extract-token | Full token has no prefix unsupported prefix wrong prefix or missing token |
 | message | verification | verify-id/store | Requested verification prefix is not configured |
-| message | verification | verify-id/decode-token | Reserved for token decoding failures |
+| message | verification | verify-id/decode-token | JWT cannot be decoded or parsed far enough to inspect claims before validation |
 | validation errors with message and path | verification | verify-id/validate-payload | Decoded JWT payload fails ProtectedPayload validation |
 | message | verification | verify-id/verify-scope | Scope is missing mismatched or rejected by validator |
 | message and optional finalMessage | verification | verify-id/verify-token | JWT is expired has a bad signature or cannot be verified |
@@ -332,6 +332,9 @@ Suggested public Go surface and domain types.
 #### Go API Sketch
 
 ```go
+//go:build design
+// +build design
+
 package lunarcrypt
 
 import "time"
@@ -408,6 +411,26 @@ type Store struct {
 	Cyphers map[string]TranslucentLizardCypher
 }
 
+type Builder struct {
+	store Store
+}
+
+func NewBuilder() *Builder {
+	return nil
+}
+
+func (b *Builder) SetTitle(title string) *Builder {
+	return b
+}
+
+func (b *Builder) AddTranslucentLizard(prefix string, cypher TranslucentLizardCypher) *Builder {
+	return b
+}
+
+func (b *Builder) Build() (Store, error) {
+	return Store{}, nil
+}
+
 type ValidationError struct {
 	Message string `json:"message"`
 	Path    string `json:"path"`
@@ -453,6 +476,7 @@ func (c *Crypt) VerifyIDByPrefix(prefix string, fullToken string) Result[IDPaylo
 | decision | go_guidance | rationale |
 | --- | --- | --- |
 | api-shape | Expose a small synchronous API with New Store SignID VerifyID and VerifyIDByPrefix | HMAC signing and verification are CPU-local operations and do not need context unless a future key provider is introduced |
+| configuration-api | Include both plain Store structs and an ergonomic Builder API in the first Go release | Plain structs keep configuration transparent and testable while the builder gives users a safer guided setup path |
 | result-shape | Return Result[T] values instead of Go errors for expected signing and verification failures | Preserves the TypeScript railway-style contract and keeps callers branching on status |
 | constructor-validation | Return (*Crypt error) from New when store configuration is invalid | Configuration errors are programmer/setup failures and should be caught before runtime signing |
 | payload-validation | Return failure Result values for invalid payloads passed to SignID or decoded from tokens | Payload failures are part of normal data handling and map to stable protocol steps |
@@ -461,7 +485,8 @@ func (c *Crypt) VerifyIDByPrefix(prefix string, fullToken string) Result[IDPaylo
 | expiration | Convert Expiration to time.Duration and reject non-positive values or unknown units | Go callers should get deterministic validation before token creation |
 | jwt-library | Use a maintained JWT or JOSE library and explicitly restrict accepted methods to HS256 HS384 and HS512 | Prevents algorithm confusion and preserves the strength mapping |
 | token-parsing | Use strings.LastIndexByte(fullToken ':') to split prefix from JWT | Matches the final-colon rule and supports prefixes that contain colons |
-| verification-order | For compatibility decode and validate claims before signature verification but never return claims until verification succeeds | Matches the TypeScript behavior while keeping trust boundaries explicit |
+| verification-order | Verify JWT algorithm signature and expiration before accepting claims validating payload shape or checking scope | This intentionally favors Go trust boundaries over the TypeScript decode-before-verify order |
+| decode-token-errors | Use verify-id/decode-token only when a JWT cannot be decoded or parsed before claims validation | Separates malformed token structure from verified claims that fail payload validation |
 | alt-secret | Try the current secret first and only try AltSecret after current verification fails | Preserves rotation behavior and makes finalMessage meaningful when both secrets fail |
 | exp-stripping | Return IDPayload without Exp on successful verification | Keeps JWT protocol claims out of application payloads |
 | error-ids | Keep step strings byte-for-byte stable across Go and TypeScript | Allows cross-language tests and caller logic to rely on deterministic failures |
@@ -486,7 +511,7 @@ Focused files and responsibilities for the Go implementation.
 | --- | --- | --- | --- |
 | crypt.go | New SignID VerifyID VerifyIDByPrefix | Own the Crypt type and route SignID VerifyID and VerifyIDByPrefix calls | unsupported prefixes and cypher dispatch |
 | model.go | domain structs constants and generic Result | Define Store Cypher Expiration IDPayload ProtectedPayload Result CryptError and ValidationError | JSON field names zero values and validation constraints |
-| builder.go | Builder or NewStore helper | Offer ergonomic construction helpers without hiding the validated Store model | prefix registration title constraints and duplicate prefixes |
+| builder.go | NewBuilder SetTitle AddTranslucentLizard Build | Offer ergonomic construction helpers without hiding the validated Store model | prefix registration title constraints duplicate prefixes and equivalence with plain Store setup |
 | translucent_lizard.go | internal sign and verify functions | Implement HMAC JWT signing and verification for the translucent-lizard cypher | algorithm mapping expiration alt secret fallback and exp stripping |
 | token.go | extractTokenPrefix extractToken composeFullToken | Parse and compose prefixed JWT tokens | final-colon splitting wrong prefix empty prefix and missing token |
 | scope.go | checkScope helper | Compare expected scope and run custom scope validators | string and string-list equality missing scope and custom validator errors |
@@ -528,8 +553,5 @@ Implementation details that deserve explicit product decisions.
 #### Open Questions
 
 1. Should the protocol reserve a version field for future cypher kinds or token formats?
-2. Should scope policy run before or after signature verification in all future implementations?
-3. Should `verify-id/decode-token` become a required failure path for malformed JWTs?
-4. Should the first Go release include a builder API, plain structs only, or both?
-5. Should canonical JSON test vectors with fixed secrets and expiry times be generated from flyb metadata?
+2. Should canonical JSON test vectors with fixed secrets and expiry times be generated from flyb metadata?
 

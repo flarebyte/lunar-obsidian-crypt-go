@@ -1,0 +1,7 @@
+locator: token_fuzz_test.go
+meta:
+  function_list:
+    - FuzzExtractTokenPrefix
+  import_files_list:
+    - testing
+  language: go

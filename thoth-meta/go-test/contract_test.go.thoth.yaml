@@ -1,0 +1,21 @@
+locator: contract_test.go
+meta:
+  function_list:
+    - TestContractAltSecretBehavior
+    - TestContractScopeBehavior
+    - TestContractSignAlgorithms
+    - TestContractVerifyFailureSteps
+    - TestContractVerifyPrefix
+    - contractNow
+    - loadContractFixtures
+    - newContractCrypt
+    - newContractCryptWithAltSecret
+    - signAndVerifyContractScope
+    - signContractClaims
+  import_files_list:
+    - encoding/json
+    - github.com/golang-jwt/jwt/v5
+    - os
+    - testing
+    - time
+  language: go

@@ -1,0 +1,16 @@
+locator: translucent_lizard_security_test.go
+meta:
+  function_list:
+    - TestSecurityRejectsMalformedCompactJWTs
+    - TestSecurityRejectsTamperedPayload
+    - TestSecurityRejectsTamperedSignature
+    - TestSecurityRejectsUnexpectedClaimShapes
+    - TestSecurityRejectsUnrelatedSecret
+    - signedTokenParts
+  import_files_list:
+    - encoding/base64
+    - github.com/golang-jwt/jwt/v5
+    - strings
+    - testing
+    - time
+  language: go

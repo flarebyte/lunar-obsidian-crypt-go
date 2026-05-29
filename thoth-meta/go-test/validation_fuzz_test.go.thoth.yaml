@@ -1,0 +1,8 @@
+locator: validation_fuzz_test.go
+meta:
+  function_list:
+    - FuzzScopeValueUnmarshalJSON
+  import_files_list:
+    - encoding/json
+    - testing
+  language: go

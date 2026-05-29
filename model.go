@@ -1,9 +1,19 @@
-//go:build design
-// +build design
-
+/*
+Purpose: Defines the public data model for configuring stores, passing ID payloads, and returning stable results from lunarcrypt APIs.
+Responsibilities:
+- Declare public enums, payload structs, store structs, error structs, and generic result wrappers.
+- Normalize JSON scope values so string and string-list inputs share one internal representation.
+Architecture notes:
+- Keep this file behavior-light; validation, token parsing, and cryptographic operations belong in dedicated files.
+- ScopeValue intentionally marshals as a string list even when decoded from a single string.
+*/
 package lunarcrypt
 
-import "time"
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+)
 
 type TimeUnit string
 
@@ -41,12 +51,31 @@ type Expiration struct {
 	Unit  TimeUnit
 }
 
-func (e Expiration) Duration() (time.Duration, error) {
-	// Implementations should reject unknown units and non-positive values.
-	return 0, nil
+type ScopeValue []string
+
+func (s *ScopeValue) UnmarshalJSON(data []byte) error {
+	if bytes.Equal(data, []byte("null")) {
+		return fmt.Errorf("scope value must be a string or string list")
+	}
+
+	var single string
+	if err := json.Unmarshal(data, &single); err == nil {
+		*s = ScopeValue{single}
+		return nil
+	}
+
+	var values []string
+	if err := json.Unmarshal(data, &values); err == nil {
+		*s = append((*s)[:0], values...)
+		return nil
+	}
+
+	return fmt.Errorf("scope value must be a string or string list")
 }
 
-type ScopeValue []string
+func (s ScopeValue) MarshalJSON() ([]byte, error) {
+	return json.Marshal([]string(s))
+}
 
 type IDPayload struct {
 	ID    string                `json:"id"`
@@ -77,26 +106,6 @@ type Store struct {
 	Cyphers map[string]TranslucentLizardCypher
 }
 
-type Builder struct {
-	store Store
-}
-
-func NewBuilder() *Builder {
-	return nil
-}
-
-func (b *Builder) SetTitle(title string) *Builder {
-	return b
-}
-
-func (b *Builder) AddTranslucentLizard(prefix string, cypher TranslucentLizardCypher) *Builder {
-	return b
-}
-
-func (b *Builder) Build() (Store, error) {
-	return Store{}, nil
-}
-
 type ValidationError struct {
 	Message string `json:"message"`
 	Path    string `json:"path"`
@@ -113,25 +122,4 @@ type Result[T any] struct {
 	Status ResultStatus `json:"status"`
 	Value  T            `json:"value,omitempty"`
 	Error  *CryptError  `json:"error,omitempty"`
-}
-
-type Crypt struct {
-	store    Store
-	prefixes []string
-}
-
-func New(store Store) (*Crypt, error) {
-	return nil, nil
-}
-
-func (c *Crypt) SignID(prefix string, payload IDPayload) Result[string] {
-	return Result[string]{}
-}
-
-func (c *Crypt) VerifyID(fullToken string) Result[IDPayload] {
-	return Result[IDPayload]{}
-}
-
-func (c *Crypt) VerifyIDByPrefix(prefix string, fullToken string) Result[IDPayload] {
-	return Result[IDPayload]{}
 }

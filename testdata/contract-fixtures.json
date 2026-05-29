@@ -1,0 +1,12 @@
+{
+  "fixedNowUnix": 4102444800,
+  "currentSecret": "contract-current-secret-not-real",
+  "previousSecret": "contract-previous-secret-not-real",
+  "otherSecret": "contract-other-secret-not-real",
+  "productPrefix": "product",
+  "companyPrefix": "company",
+  "tenantProductPrefix": "tenant:product",
+  "productID": "product123",
+  "account": "account890",
+  "roles": ["admin", "writer"]
+}

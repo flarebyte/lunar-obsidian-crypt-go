@@ -1,0 +1,20 @@
+locator: token.go
+meta:
+  architecture_notes:
+    - Splitting uses the last colon so prefixes may themselves contain colons, such as tenant-qualified product prefixes.
+    - This file does not decode or verify JWT content; cryptographic token semantics belong in translucent_lizard.go.
+  function_list:
+    - composeFullToken
+    - extractToken
+    - extractTokenPrefix
+    - splitFullToken
+    - tokenExtractionError
+    - unsupportedPrefixError
+  import_files_list:
+    - fmt
+    - slices
+    - strings
+  language: go
+  purpose: Handles the prefixed-token envelope that selects a cypher before JWT verification.
+  responsibilities:
+    - Compose full tokens, split prefixes from compact tokens, enforce allowed or expected prefixes, and produce extract-token errors.

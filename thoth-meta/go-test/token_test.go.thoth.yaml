@@ -1,0 +1,12 @@
+locator: token_test.go
+meta:
+  function_list:
+    - TestComposeFullToken
+    - TestExtractToken
+    - TestExtractTokenPrefix
+    - TestTokenExtractionErrorsDoNotIncludeFullToken
+    - TestUnsupportedPrefixError
+    - assertTokenExtractionError
+  import_files_list:
+    - testing
+  language: go

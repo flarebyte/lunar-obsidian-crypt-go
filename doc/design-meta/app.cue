@@ -221,12 +221,9 @@ Secrets must be opaque byte arrays supplied by the embedding application. Implem
 	{
 		name:  "crypt.open.questions"
 		title: "Open Questions"
-		markdown: """
+	markdown: """
 1. Should the protocol reserve a version field for future cypher kinds or token formats?
-2. Should scope policy run before or after signature verification in all future implementations?
-3. Should `verify-id/decode-token` become a required failure path for malformed JWTs?
-4. Should the first Go release include a builder API, plain structs only, or both?
-5. Should canonical JSON test vectors with fixed secrets and expiry times be generated from flyb metadata?
+2. Should canonical JSON test vectors with fixed secrets and expiry times be generated from flyb metadata?
 """
 		labels: ["open-question"]
 	},

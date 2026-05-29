@@ -1,0 +1,14 @@
+locator: model_test.go
+meta:
+  function_list:
+    - TestPayloadJSONFieldNames
+    - TestPublicConstantValues
+    - TestResultJSONFieldNames
+    - TestScopeValueMarshalJSONIsStable
+    - TestScopeValueUnmarshalJSON
+    - TestScopeValueUnmarshalJSONRejectsInvalidValues
+  import_files_list:
+    - encoding/json
+    - strings
+    - testing
+  language: go

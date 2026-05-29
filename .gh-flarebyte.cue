@@ -107,12 +107,12 @@ go: {
 
 devOutput: {
 	color:      "auto"
-	style:      "summary"
+	style:      "per_test"
 	showPassed: true
 }
 
 coverage: {
-	min:        80
+	min:        95
 	enforceMin: true
 }
 
