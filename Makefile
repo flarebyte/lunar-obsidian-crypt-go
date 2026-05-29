@@ -65,3 +65,14 @@ thoth-meta-go:
 
 thoth-meta-go-test:
 	$(THOTH) run --config ./pipeline-go-test-maat.thoth.cue
+
+sec:
+	semgrep scan --config auto
+
+dup:
+	npx jscpd --format go --min-lines 10 --ignore "**/.gomodcache/**,**/.gocache/**,**/.e2e-bin/**,**/node_modules/**,**/dist/**" --gitignore .
+	npx jscpd --format typescript --min-lines 10 --gitignore .
+
+complexity:
+	scc --sort complexity --by-file -i go . | head -n 15
+	scc --sort complexity --by-file -i ts . | head -n 15
